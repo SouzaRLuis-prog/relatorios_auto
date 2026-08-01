@@ -40,7 +40,7 @@ export function DarkModeToggle() {
       aria-label="Alternar modo escuro"
     >
       {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700" />}
-      <span className="hidden sm:inline">{isDark ? 'Modo Claro' : 'Modo Escuro'}</span>
+      <span className="hidden sm:inline">{isDark ? '' : ''}</span>
     </button>
   );
 }

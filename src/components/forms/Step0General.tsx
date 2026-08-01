@@ -24,10 +24,10 @@ export function Step0General({ data, onChange }: Props) {
             onChange={e => onChange({ unidade: e.target.value as any })}
             className="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none"
           >
-            <option value="Unidade Centro">Unidade Centro</option>
-            <option value="Unidade Norte">Unidade Norte</option>
-            <option value="Unidade Sul">Unidade Sul</option>
-            <option value="Unidade Leste">Unidade Leste</option>
+            <option value="Conselho Tutelar 1">Conselho Tutelar 1</option>
+            <option value="Conselho Tutelar 2">Conselho Tutelar 2</option>
+            <option value="Conselho Tutelar 3">Conselho Tutelar 3</option>
+            <option value="Conselho Tutelar 4">Conselho Tutelar 4</option>
           </select>
         </div>
 

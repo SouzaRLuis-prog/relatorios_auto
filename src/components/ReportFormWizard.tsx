@@ -24,7 +24,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, Sparkles } from 'lucide-r
 const initialFormData: ReportData = {
   periodo: '',
   mesAno: '',
-  unidade: 'Unidade Centro',
+  unidade: 'Conselho Tutelar 1',
   dataVisita: new Date().toISOString().split('T')[0],
   responsavelVisita: '',
   topico1_estrutura: {
@@ -122,7 +122,7 @@ export function ReportFormWizard() {
       const result = await res.json();
       if (!result.success) throw new Error(result.error);
 
-      setStatusMessage('Iniciando download do relatório em formato Word...');
+      setStatusMessage('Iniciando download do relatório em formato PDF ...');
       const byteCharacters = atob(result.base64File);
       const byteNumbers = new Array(byteCharacters.length);
       for (let i = 0; i < byteCharacters.length; i++) {
@@ -162,10 +162,10 @@ export function ReportFormWizard() {
       <header className="flex items-center justify-between pb-6 border-b border-slate-200 dark:border-slate-800 mb-6">
         <div>
           <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-slate-50 flex items-center gap-2">
-            Relatório de Visitas <Sparkles className="w-5 h-5 text-amber-500" />
+            Visitas aos Conselhos Tuteladres 
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            Sistema Inteligente de Fiscalização
+            Montes Claros - MG
           </p>
         </div>
         <DarkModeToggle />
@@ -225,7 +225,7 @@ export function ReportFormWizard() {
               </>
             ) : (
               <>
-                <CheckCircle2 className="w-5 h-5" /> Salvar & Gerar DOCX
+                <CheckCircle2 className="w-5 h-5" /> Salvar & Gerar PDF
               </>
             )}
           </button>
