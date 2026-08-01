@@ -1,12 +1,13 @@
 import PDFDocument from 'pdfkit';
 import { ReportData } from '@/models/report';
 import { AIAnalysisResult } from './geminiController';
+import path from 'path';
 
 const FONT_FAMILY_REGULAR = 'AppFont';
 const FONT_FAMILY_BOLD = 'AppFont-Bold';
 
-const FONT_PATH_REGULAR = 'C:\\Windows\\Fonts\\arial.ttf';
-const FONT_PATH_BOLD = 'C:\\Windows\\Fonts\\arialbd.ttf';
+const FONT_PATH_REGULAR = path.join(process.cwd(), 'public', 'fonts', 'arial.ttf');
+const FONT_PATH_BOLD = path.join(process.cwd(), 'public', 'fonts', 'arialbd.ttf');
 
 const COLOR_PRIMARY = '#1F4E78';
 const COLOR_TEXT_DARK = '#000000';
