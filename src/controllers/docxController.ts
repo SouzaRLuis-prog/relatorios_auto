@@ -32,10 +32,9 @@ export async function buildDocxReport(data: ReportData, aiData: AIAnalysisResult
     return new Paragraph({
       children: [
         new TextRun({
-          text: title.toUpperCase(),
-          bold: true,
-          size: 22,
-          color: "1F4E78",
+          text: "Nenhum registro apontado para este item nesta visita.",
+          italics: true, // Correto (plural)
+          color: "595959",
         }),
       ],
       spacing: { before: 280, after: 120 },
