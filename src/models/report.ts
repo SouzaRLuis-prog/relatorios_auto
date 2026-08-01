@@ -43,7 +43,7 @@ export interface ReportData {
   // Dados Gerais
   periodo: string;
   mesAno: string;
-  unidade: 'Unidade Centro' | 'Unidade Norte' | 'Unidade Sul' | 'Unidade Leste';
+  unidade: 'Conselho Tutelar 1' | 'Conselho Tutelar 2' | 'Conselho Tutelar 3' | 'Conselho Tutelar 4' | string;
   dataVisita: string;
   responsavelVisita: string;
 
