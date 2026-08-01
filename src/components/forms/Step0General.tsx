@@ -21,7 +21,7 @@ export function Step0General({ data, onChange }: Props) {
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Unidade</label>
           <select
             value={data.unidade}
-            onChange={e => onChange({ unidade: e.target.value as any })}
+            onChange={e => onChange({ unidade: e.target.value as ReportData['unidade'] })}
             className="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none"
           >
             <option value="Conselho Tutelar 1">Conselho Tutelar 1</option>

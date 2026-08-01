@@ -77,7 +77,7 @@ export async function buildDocxReport(data: ReportData, aiData: AIAnalysisResult
           children: [
             new TextRun({
               text: "Nenhum registro apontado para este item nesta visita.",
-              italic: true,
+              italics: true,
               color: "595959",
             }),
           ],
@@ -203,12 +203,19 @@ export async function buildDocxReport(data: ReportData, aiData: AIAnalysisResult
     .filter((base64Img) => typeof base64Img === 'string' && base64Img.trim().length > 0)
     .map((base64Img) => {
       try {
-        const cleanBase64 = base64Img.replace(/^data:image\/(png|jpeg|jpg);base64,/, '');
+        const imageData = base64Img.match(/^data:image\/(png|jpeg|jpg);base64,(.+)$/);
+        if (!imageData) {
+          throw new Error('Formato de imagem não suportado');
+        }
+
+        const [, imageSubtype, cleanBase64] = imageData;
         const imgBuffer = Buffer.from(cleanBase64, 'base64');
+        const imageType = imageSubtype === 'png' ? 'png' : 'jpg';
 
         return new Paragraph({
           children: [
             new ImageRun({
+              type: imageType,
               data: imgBuffer,
               transformation: { width: 450, height: 280 },
             }),
@@ -219,7 +226,7 @@ export async function buildDocxReport(data: ReportData, aiData: AIAnalysisResult
       } catch (err) {
         return new Paragraph({
           children: [
-            new TextRun({ text: "[Erro ao carregar esta imagem]", italic: true, color: "C00000" }),
+            new TextRun({ text: "[Erro ao carregar esta imagem]", italics: true, color: "C00000" }),
           ],
           spacing: { after: 100 },
         });
@@ -341,7 +348,7 @@ export async function buildDocxReport(data: ReportData, aiData: AIAnalysisResult
                   children: [
                     new TextRun({
                       text: "Nenhum registro fotográfico anexado nesta inspeção.",
-                      italic: true,
+                      italics: true,
                       color: "595959",
                     }),
                   ],

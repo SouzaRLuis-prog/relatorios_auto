@@ -4,6 +4,11 @@ export type ConsumableStatus = 'Suficiente' | 'Baixo Estoque' | 'Em falta';
 export type EquipmentStatus = 'Em funcionamento' | 'Necessita manutenção' | 'Inoperante';
 export type PriorityLevel = 'Alta' | 'Média' | 'Baixa';
 export type DemandSituation = 'Pendente' | 'Em andamento' | 'Concluído';
+export type Unidade =
+  | 'Conselho Tutelar 1'
+  | 'Conselho Tutelar 2'
+  | 'Conselho Tutelar 3'
+  | 'Conselho Tutelar 4';
 
 export interface FieldObserved<T = string> {
   status: T;
@@ -43,7 +48,7 @@ export interface ReportData {
   // Dados Gerais
   periodo: string;
   mesAno: string;
-  unidade: 'Unidade Centro' | 'Unidade Norte' | 'Unidade Sul' | 'Unidade Leste';
+  unidade: Unidade;
   dataVisita: string;
   responsavelVisita: string;
 
