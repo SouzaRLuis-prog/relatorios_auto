@@ -115,7 +115,7 @@ export async function buildPdfReport(data: ReportData, aiData: AIAnalysisResult)
         .fillColor(COLOR_PRIMARY)
         .fontSize(16)
         .font(FONT_FAMILY_BOLD)
-        .text('RELATÓRIO TÉCNICO DE INSPEÇÃO E ACOMPANHAMENTO - SMDCA - MONTES CLAROS - MG', { align: ALIGN_CENTER });
+        .text('RELATÓRIO TÉCNICO DE INSPEÇÃO E ACOMPANHAMENTO - MONTES CLAROS - MG', { align: ALIGN_CENTER });
 
       doc.moveDown(1);
 
