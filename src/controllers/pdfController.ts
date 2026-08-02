@@ -1,14 +1,30 @@
 import PDFDocument from 'pdfkit';
+import fs from 'fs';
+import path from 'path';
 import { ReportData } from '@/models/report';
 import { AIAnalysisResult } from './geminiController';
-import path from 'path';
-import fs from 'fs';
 
 const FONT_FAMILY_REGULAR = 'AppFont';
 const FONT_FAMILY_BOLD = 'AppFont-Bold';
 
-const regularFontBuffer = fs.readFileSync(path.join(process.cwd(), 'src', 'fonts', 'arial.ttf'));
-const boldFontBuffer = fs.readFileSync(path.join(process.cwd(), 'src', 'fonts', 'arialbd.ttf'));
+// Cache dos buffers para ler do disco apenas na primeira vez que a aplicação rodar
+let regularFontBuffer: Buffer | null = null;
+let boldFontBuffer: Buffer | null = null;
+
+function loadFonts() {
+  if (regularFontBuffer && boldFontBuffer) return;
+
+  try {
+    // Lê os arquivos direto da pasta public/fonts do projeto
+    const regularPath = path.join(process.cwd(), 'public', 'fonts', 'Roboto-Regular.ttf');
+    const boldPath = path.join(process.cwd(), 'public', 'fonts', 'Roboto-Bold.ttf');
+
+    regularFontBuffer = fs.readFileSync(regularPath);
+    boldFontBuffer = fs.readFileSync(boldPath);
+  } catch (error) {
+    throw new Error('Certifique-se de colocar os arquivos Roboto-Regular.ttf e Roboto-Bold.ttf dentro da pasta public/fonts/');
+  }
+}
 
 const COLOR_PRIMARY = '#1F4E78';
 const COLOR_TEXT_DARK = '#000000';
@@ -36,6 +52,8 @@ const TEXT_EMPTY_CONCLUSION = 'Sem parecer registrado para este ciclo.';
 const TEXT_EMPTY_EVOLUTION = 'Histórico em acompanhamento constante.';
 
 export async function buildPdfReport(data: ReportData, aiData: AIAnalysisResult): Promise<Buffer> {
+  loadFonts();
+
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({
@@ -43,8 +61,8 @@ export async function buildPdfReport(data: ReportData, aiData: AIAnalysisResult)
         size: PAGE_SIZE,
       });
 
-      doc.registerFont(FONT_FAMILY_REGULAR, regularFontBuffer);
-      doc.registerFont(FONT_FAMILY_BOLD, boldFontBuffer);
+      doc.registerFont(FONT_FAMILY_REGULAR, regularFontBuffer!);
+      doc.registerFont(FONT_FAMILY_BOLD, boldFontBuffer!);
       doc.font(FONT_FAMILY_REGULAR);
 
       const buffers: Buffer[] = [];
