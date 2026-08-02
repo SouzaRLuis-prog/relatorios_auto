@@ -2,12 +2,13 @@ import PDFDocument from 'pdfkit';
 import { ReportData } from '@/models/report';
 import { AIAnalysisResult } from './geminiController';
 import path from 'path';
+import fs from 'fs';
 
 const FONT_FAMILY_REGULAR = 'AppFont';
 const FONT_FAMILY_BOLD = 'AppFont-Bold';
 
-const FONT_PATH_REGULAR = path.join(process.cwd(), 'public', 'fonts', 'arial.ttf');
-const FONT_PATH_BOLD = path.join(process.cwd(), 'public', 'fonts', 'arialbd.ttf');
+const regularFontBuffer = fs.readFileSync(path.join(process.cwd(), 'src', 'fonts', 'arial.ttf'));
+const boldFontBuffer = fs.readFileSync(path.join(process.cwd(), 'src', 'fonts', 'arialbd.ttf'));
 
 const COLOR_PRIMARY = '#1F4E78';
 const COLOR_TEXT_DARK = '#000000';
@@ -40,11 +41,11 @@ export async function buildPdfReport(data: ReportData, aiData: AIAnalysisResult)
       const doc = new PDFDocument({
         margin: PAGE_MARGIN,
         size: PAGE_SIZE,
-        font: FONT_PATH_REGULAR,
       });
 
-      doc.registerFont(FONT_FAMILY_REGULAR, FONT_PATH_REGULAR);
-      doc.registerFont(FONT_FAMILY_BOLD, FONT_PATH_BOLD);
+      doc.registerFont(FONT_FAMILY_REGULAR, regularFontBuffer);
+      doc.registerFont(FONT_FAMILY_BOLD, boldFontBuffer);
+      doc.font(FONT_FAMILY_REGULAR);
 
       const buffers: Buffer[] = [];
       doc.on('data', (chunk) => buffers.push(chunk));

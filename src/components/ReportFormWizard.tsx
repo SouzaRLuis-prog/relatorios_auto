@@ -110,7 +110,7 @@ export function ReportFormWizard() {
 
   const handleSubmit = async () => {
     setIsLoading(true);
-    setStatusMessage('Sintetizando tópicos com Inteligência Artificial e gerando .DOCX...');
+    setStatusMessage('Sintetizando tópicos com Inteligência Artificial e gerando .PDF...');
 
     try {
       const res = await fetch('/api/generate-report', {
