@@ -162,7 +162,7 @@ export function ReportFormWizard() {
       <header className="flex items-center justify-between pb-6 border-b border-slate-200 dark:border-slate-800 mb-6">
         <div>
           <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-slate-50 flex items-center gap-2">
-            Visitas aos Conselhos Tuteladres 
+            Visitas aos Conselhos Tutelares 
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
             Montes Claros - MG
