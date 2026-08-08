@@ -1,19 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateAIReportSection } from '@/controllers/geminiController';
+import { generateAIReportSection, AIAnalysisResult } from '@/controllers/geminiController';
 import { buildPdfReport } from '@/controllers/pdfController';
+import { ReportData } from '@/models/report';
 
 export async function POST(req: NextRequest) {
   try {
-    const formData = await req.json();
+    const formData: ReportData = await req.json();
 
-    let aiResults: any = null;
+    let aiResults: AIAnalysisResult;
     let usedFallback = false;
 
     // 1. Tenta processar via Gemini AI
     try {
       aiResults = await generateAIReportSection(formData);
-    } catch (geminiError: any) {
-      console.warn('⚠️ Gemini API falhou ou está indisponível. Usando modo de contingência/fallback:', geminiError?.message || geminiError);
+    } catch (geminiError: unknown) {
+      const message = geminiError instanceof Error ? geminiError.message : String(geminiError);
+      console.warn('⚠️ Gemini API falhou ou está indisponível. Usando modo de contingência/fallback:', message);
       usedFallback = true;
       
       // Gera uma síntese estruturada padrão usando os próprios dados inseridos pelo fiscal
@@ -38,10 +40,11 @@ export async function POST(req: NextRequest) {
       responsavel: formData.responsavelVisita,
       usedFallback, // Informa ao frontend se o documento foi gerado em modo de contingência
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Erro interno ao processar relatório.';
     console.error('❌ Erro crítico na geração do relatório:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Erro interno ao processar relatório.' },
+      { success: false, error: message },
       { status: 500 }
     );
   }
@@ -51,7 +54,7 @@ export async function POST(req: NextRequest) {
  * Função de Contingência (Fallback): 
  * Garante que a estrutura esperada pelo 'buildPdfReport' seja preenchida mesmo sem IA.
  */
-function createFallbackAIResults(data: any) {
+function createFallbackAIResults(data: ReportData): AIAnalysisResult {
   return {
     topico12_conclusao: `Relatório de visita técnica realizado na unidade ${data.unidade || ''} em ${data.dataVisita || ''} pelo(a) responsável ${data.responsavelVisita || ''}. (Síntese gerada em modo offline/sem IA).`,
     avaliacaoEvolucao: "Informações registradas conforme checklist preenchido em campo.",

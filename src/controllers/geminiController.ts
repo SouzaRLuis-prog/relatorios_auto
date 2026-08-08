@@ -32,7 +32,8 @@ export async function generateAIReportSection(data: ReportData): Promise<AIAnaly
       topico5_rh: data?.topico5_rh,
       topico6_atendimento: data?.topico6_atendimento,
       topico7_seguranca: data?.topico7_seguranca,
-      observacoesGerais: (data as any)?.observacoesGerais || (data as any)?.observacoes    };
+      observacoesGerais: data?.observacoesGerais || data?.observacoes,
+    };
 
     const prompt = `
 Você é um auditor institucional sênior. Analise os dados resumidos da visita técnica abaixo:
@@ -98,8 +99,8 @@ Formato exato do JSON esperado:
       topico12_conclusao: parsed.topico12_conclusao || "Conclusão registrada com base nos dados coletados em campo.",
       avaliacaoEvolucao: parsed.avaliacaoEvolucao || "Avaliação de evolução realizada sem observações críticas adicionais.",
     };
-  } catch (error: any) {
-    console.error("ERRO DETALHADO DA GROQ:", error?.message || error);
+  } catch (error: unknown) {
+    console.error("ERRO DETALHADO DA GROQ:", error instanceof Error ? error.message : error);
     console.warn("Falha ao processar com IA, aplicando respostas do fallback de segurança.");
     return getFallbackAIResult(data);
   }

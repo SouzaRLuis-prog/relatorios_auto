@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     let result;
     try {
       result = JSON.parse(responseText);
-    } catch (e) {
+    } catch {
       throw new Error(`O Apps Script retornou uma resposta inválida (não-JSON): ${responseText.substring(0, 100)}`);
     }
 
@@ -34,10 +34,11 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true, fileUrl: result.fileUrl });
-  } catch (error: any) {
-    console.error('Erro na API /api/upload-drive:', error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Erro desconhecido no servidor.';
+    console.error('Erro na API /api/upload-drive:', message);
     return NextResponse.json(
-      { success: false, error: error.message || 'Erro desconhecido no servidor.' },
+      { success: false, error: message },
       { status: 500 }
     );
   }

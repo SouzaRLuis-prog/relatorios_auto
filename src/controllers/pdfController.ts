@@ -19,7 +19,7 @@ function loadFonts() {
 
     regularFontBuffer = fs.readFileSync(regularPath);
     boldFontBuffer = fs.readFileSync(boldPath);
-  } catch (error) {
+  } catch {
     throw new Error('Certifique-se de colocar os arquivos Roboto-Regular.ttf e Roboto-Bold.ttf dentro da pasta public/fonts/');
   }
 }
@@ -183,7 +183,7 @@ export async function buildPdfReport(data: ReportData, aiData: AIAnalysisResult)
       doc.y = infoBoxY + infoBoxHeight + 15;
 
       // --- RENDERIZAÇÃO DE TABELAS DOS TÓPICOS ---
-      const renderTopicoEmTabela = (num: number, titulo: string, itemData: any) => {
+      const renderTopicoEmTabela = (num: number, titulo: string, itemData: unknown) => {
         const isArrayData = Array.isArray(itemData);
         const hasData = isArrayData ? itemData.length > 0 : (itemData && typeof itemData === 'object' && Object.keys(itemData).length > 0);
         
@@ -215,12 +215,16 @@ export async function buildPdfReport(data: ReportData, aiData: AIAnalysisResult)
         let index = 0;
 
         if (isArrayData) {
-          itemData.forEach((item: any) => {
+          itemData.forEach((item: Record<string, unknown>) => {
             if (!item) return;
 
-            const col1Text = item.name || item.demanda || item.providencia || item.descricao || '—';
-            const col2Text = item.status || item.prioridade || item.situacao || '—';
-            const col3Text = item.observation || item.observacao || item.observação || item.obs || item.obsGerais || (item.setorResponsavel ? `Setor: ${item.setorResponsavel}` : '') || (item.data ? `Data: ${item.data}` : '') || '—';
+            const col1Text = String(item.name || item.demanda || item.providencia || item.descricao || '—');
+            const col2Text = String(item.status || item.prioridade || item.situacao || '—');
+            const col3Text = String(
+              item.observation || item.observacao || item.observação || item.obs || item.obsGerais ||
+              (item.setorResponsavel ? `Setor: ${item.setorResponsavel}` : '') ||
+              (item.data ? `Data: ${item.data}` : '') || '—'
+            );
 
             const rowHeight = Math.max(
               doc.heightOfString(col1Text, { width: colWidths[0] - 12 }),
@@ -250,8 +254,8 @@ export async function buildPdfReport(data: ReportData, aiData: AIAnalysisResult)
             currentY += rowHeight;
             index++;
           });
-        } else {
-          Object.entries(itemData).forEach(([chave, valor]) => {
+        } else if (itemData && typeof itemData === 'object') {
+          Object.entries(itemData as Record<string, unknown>).forEach(([chave, valor]) => {
             if (valor === undefined || valor === null || valor === '') return;
 
             const chaveFormatada = chave
@@ -262,7 +266,7 @@ export async function buildPdfReport(data: ReportData, aiData: AIAnalysisResult)
             let obsTexto = '—';
 
             if (typeof valor === 'object' && !Array.isArray(valor)) {
-              const valObj = valor as Record<string, any>;
+              const valObj = valor as Record<string, unknown>;
               const statusVal = valObj.status ?? valObj.Status ?? valObj.situacao ?? valObj.Situacao ?? '—';
               const obsVal = valObj.observation ?? valObj.Observacao ?? valObj['observação'] ?? valObj['Observação'] ?? valObj.obs ?? valObj.Obs ?? valObj.detalhes ?? valObj.Detalhes ?? '—';
 
@@ -305,15 +309,15 @@ export async function buildPdfReport(data: ReportData, aiData: AIAnalysisResult)
         doc.y = currentY + 10;
       };
 
-      renderTopicoEmTabela(1, 'Estrutura Física', (data as any)?.topico1_estrutura);
-      renderTopicoEmTabela(2, 'Limpeza e Conservação', (data as any)?.topico2_limpeza);
-      renderTopicoEmTabela(3, 'Materiais e Insumos', (data as any)?.topico3_materiais);
-      renderTopicoEmTabela(4, 'Equipamentos e Informática', (data as any)?.topico4_equipamentos);
-      renderTopicoEmTabela(5, 'Recursos Humanos', (data as any)?.topico5_rh);
-      renderTopicoEmTabela(6, 'Atendimento ao Público', (data as any)?.topico6_atendimento);
-      renderTopicoEmTabela(7, 'Segurança e Proteção', (data as any)?.topico7_seguranca);
-      renderTopicoEmTabela(8, 'Levantamento de Demandas', (data as any)?.topico8_demandas);
-      renderTopicoEmTabela(9, 'Plano de Providências e Recomendações', (data as any)?.topico9_providencias);
+      renderTopicoEmTabela(1, 'Estrutura Física', data?.topico1_estrutura);
+      renderTopicoEmTabela(2, 'Limpeza e Conservação', data?.topico2_limpeza);
+      renderTopicoEmTabela(3, 'Materiais e Insumos', data?.topico3_materiais);
+      renderTopicoEmTabela(4, 'Equipamentos e Informática', data?.topico4_equipamentos);
+      renderTopicoEmTabela(5, 'Recursos Humanos', data?.topico5_rh);
+      renderTopicoEmTabela(6, 'Atendimento ao Público', data?.topico6_atendimento);
+      renderTopicoEmTabela(7, 'Segurança e Proteção', data?.topico7_seguranca);
+      renderTopicoEmTabela(8, 'Levantamento de Demandas', data?.topico8_demandas);
+      renderTopicoEmTabela(9, 'Plano de Providências e Recomendações', data?.topico9_providencias);
 
       // --- TÓPICO 10: FOTOS ---
       drawSectionHeader('10. Registro Fotográfico');
@@ -332,7 +336,7 @@ export async function buildPdfReport(data: ReportData, aiData: AIAnalysisResult)
             const imgBuffer = Buffer.from(cleanBase64, 'base64');
             doc.image(imgBuffer, { fit: [420, 260], align: ALIGN_CENTER });
             doc.moveDown(1.2);
-          } catch (e) {
+          } catch {
             doc.font(FONT_FAMILY_REGULAR).fillColor('#C00000').text('[Erro ao carregar imagem]', startX, doc.y, { align: ALIGN_LEFT });
           }
         });

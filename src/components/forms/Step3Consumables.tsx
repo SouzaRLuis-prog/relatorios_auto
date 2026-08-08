@@ -1,71 +1,119 @@
 'use client';
 
 import React from 'react';
-import { ReportData, EvaluationStatus } from '@/models/report';
-import { Sparkles } from 'lucide-react';
+import { ReportData, ConsumableItem, MaterialStatus } from '@/models/report';
+import { PackagePlus, Trash2 } from 'lucide-react';
 
 interface Props {
   data: ReportData;
   onChange: (data: Partial<ReportData>) => void;
 }
 
-const items = [
-  { key: 'limpezaGeral', label: 'Limpeza Geral' },
-  { key: 'conservacaoMobiliario', label: 'Conservação de Mobiliário' },
-  { key: 'recolhimentoLixo', label: 'Recolhimento de Lixo' },
-  { key: 'higienizacaoBanheiros', label: 'Higienização dos Banheiros' },
-] as const;
+export function Step3Consumables({ data, onChange }: Props) {
+  const materiais = data?.topico3_materiais || [];
 
-export function Step2Cleaning({ data, onChange }: Props) {
-  const handleUpdate = (key: string, field: 'status' | 'observation', value: string) => {
-    const currentLimpeza = data?.topico2_limpeza || {};
-    const currentItem = currentLimpeza[key as keyof typeof currentLimpeza] || {};
-
-    const updatedTopic = {
-      ...currentLimpeza,
-      [key]: {
-        ...currentItem,
-        [field]: value,
-      },
+  const handleAddItem = () => {
+    const newItem: ConsumableItem = {
+      id: crypto.randomUUID(),
+      name: '',
+      status: 'Suficiente',
+      observation: '',
     };
-    onChange({ topico2_limpeza: updatedTopic });
+    onChange({ topico3_materiais: [...materiais, newItem] });
+  };
+
+  const handleRemoveItem = (id: string) => {
+    onChange({ topico3_materiais: materiais.filter(item => item.id !== id) });
+  };
+
+  const handleItemChange = (id: string, field: keyof ConsumableItem, value: string) => {
+    const updated = materiais.map(item => {
+      if (item.id === id) {
+        return { ...item, [field]: value };
+      }
+      return item;
+    });
+    onChange({ topico3_materiais: updated });
   };
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-        <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Tópico 2 - Limpeza e Conservação
-      </h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+          Tópico 3 - Materiais de Consumo
+        </h2>
+        <button
+          type="button"
+          onClick={handleAddItem}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+        >
+          <PackagePlus className="w-4 h-4" /> Adicionar Material
+        </button>
+      </div>
 
-      <div className="space-y-4">
-        {items.map(({ key, label }) => {
-          const current = data?.topico2_limpeza?.[key as keyof typeof data.topico2_limpeza];
-          return (
-            <div key={key} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <span className="font-semibold text-slate-800 dark:text-slate-200">{label}</span>
-                <select
-                  value={current?.status || 'Adequado'}
-                  onChange={e => handleUpdate(key, 'status', e.target.value as EvaluationStatus)}
-                  className="p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                >
-                  <option value="Adequado">Adequado</option>
-                  <option value="Regular">Regular</option>
-                  <option value="Inadequado">Inadequado</option>
-                </select>
+      {materiais.length === 0 ? (
+        <p className="text-sm text-slate-500 dark:text-slate-400 italic text-center py-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+          Nenhum material cadastrado. Clique no botão acima para adicionar.
+        </p>
+      ) : (
+        <div className="space-y-4">
+          {materiais.map((item) => (
+            <div
+              key={item.id}
+              className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl space-y-3 relative group"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Nome do Material / Insumo
+                  </label>
+                  <input
+                    type="text"
+                    value={item.name}
+                    onChange={(e) => handleItemChange(item.id, 'name', e.target.value)}
+                    placeholder="Ex: Papel A4, Caneta Azul..."
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Situação / Estoque
+                  </label>
+                  <select
+                    value={item.status}
+                    onChange={(e) => handleItemChange(item.id, 'status', e.target.value as MaterialStatus)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="Suficiente">Suficiente</option>
+                    <option value="Insuficiente">Insuficiente</option>
+                    <option value="Em Falta">Em Falta</option>
+                  </select>
+                </div>
               </div>
 
-              <input
-                type="text"
-                placeholder="Observação (opcional)"
-                value={current?.observation || ''}
-                onChange={e => handleUpdate(key, 'observation', e.target.value)}
-                className="w-full p-2.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none"
-              />
+              <div>
+                <input
+                  type="text"
+                  value={item.observation || ''}
+                  onChange={(e) => handleItemChange(item.id, 'observation', e.target.value)}
+                  placeholder="Observação pontual (opcional)..."
+                  className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 text-slate-700 dark:text-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleRemoveItem(item.id)}
+                className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                title="Remover item"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
             </div>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

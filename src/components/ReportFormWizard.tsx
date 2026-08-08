@@ -147,9 +147,10 @@ export function ReportFormWizard() {
       });
 
       setStatusMessage('Relatório finalizado e enviado com sucesso!');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setStatusMessage(`Erro durante o processamento: ${err.message}`);
+      const message = err instanceof Error ? err.message : 'Erro desconhecido';
+      setStatusMessage(`Erro durante o processamento: ${message}`);
     } finally {
       setIsLoading(false);
     }

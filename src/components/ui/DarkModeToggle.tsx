@@ -1,36 +1,46 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useSyncExternalStore } from 'react';
 import { Sun, Moon } from 'lucide-react';
 
+const themeListeners = new Set<() => void>();
+
+function getThemeSnapshot(): boolean {
+  const storedTheme = localStorage.getItem('theme');
+  if (storedTheme === 'dark') return true;
+  if (storedTheme === 'light') return false;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+function subscribeToTheme(onStoreChange: () => void) {
+  themeListeners.add(onStoreChange);
+  const media = window.matchMedia('(prefers-color-scheme: dark)');
+  media.addEventListener('change', onStoreChange);
+  window.addEventListener('storage', onStoreChange);
+  return () => {
+    themeListeners.delete(onStoreChange);
+    media.removeEventListener('change', onStoreChange);
+    window.removeEventListener('storage', onStoreChange);
+  };
+}
+
+function notifyThemeListeners() {
+  themeListeners.forEach((listener) => listener());
+}
+
 export function DarkModeToggle() {
-  const [isDark, setIsDark] = useState(false);
+  const isDark = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, () => false);
 
   useEffect(() => {
-    // Detecta se a preferência do sistema ou localStorage é escuro
-    const storedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
-      setIsDark(true);
-      document.documentElement.classList.add('dark');
-    } else {
-      setIsDark(false);
-      document.documentElement.classList.remove('dark');
-    }
-  }, []);
+    document.documentElement.classList.toggle('dark', isDark);
+  }, [isDark]);
 
-  const toggleTheme = () => {
-    if (isDark) {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-      setIsDark(false);
-    } else {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-      setIsDark(true);
-    }
-  };
+  const toggleTheme = useCallback(() => {
+    const nextIsDark = !getThemeSnapshot();
+    document.documentElement.classList.toggle('dark', nextIsDark);
+    localStorage.setItem('theme', nextIsDark ? 'dark' : 'light');
+    notifyThemeListeners();
+  }, []);
 
   return (
     <button
