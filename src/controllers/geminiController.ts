@@ -32,8 +32,7 @@ export async function generateAIReportSection(data: ReportData): Promise<AIAnaly
       topico5_rh: data?.topico5_rh,
       topico6_atendimento: data?.topico6_atendimento,
       topico7_seguranca: data?.topico7_seguranca,
-      observacoesGerais: data?.observacoesGerais || data?.observacoes
-    };
+      observacoesGerais: (data as any)?.observacoesGerais || (data as any)?.observacoes    };
 
     const prompt = `
 Você é um auditor institucional sênior. Analise os dados resumidos da visita técnica abaixo:

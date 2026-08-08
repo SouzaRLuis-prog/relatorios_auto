@@ -41,73 +41,75 @@ export interface ActionItem {
 
 export interface ReportData {
   // Dados Gerais
-  periodo: string;
-  mesAno: string;
-  unidade: 'Conselho Tutelar 1' | 'Conselho Tutelar 2' | 'Conselho Tutelar 3' | 'Conselho Tutelar 4' | string;
-  dataVisita: string;
-  responsavelVisita: string;
+  periodo?: string;
+  mesAno?: string;
+  unidade?: 'Conselho Tutelar 1' | 'Conselho Tutelar 2' | 'Conselho Tutelar 3' | 'Conselho Tutelar 4' | string;
+  dataVisita?: string;
+  responsavelVisita?: string;
+  observacoesGerais?: string;
+  observacoes?: string;
 
   // Tópico 1 - Estrutura Física
-  topico1_estrutura: {
-    pintura: FieldObserved<EvaluationStatus>;
-    telhado: FieldObserved<EvaluationStatus>;
-    piso: FieldObserved<EvaluationStatus>;
-    portasJanelas: FieldObserved<EvaluationStatus>;
-    iluminacao: FieldObserved<EvaluationStatus>;
-    instalacoesEletricas: FieldObserved<EvaluationStatus>;
-    instalacoesHidraulicas: FieldObserved<EvaluationStatus>;
-    banheiros: FieldObserved<EvaluationStatus>;
-    copaCozinha: FieldObserved<EvaluationStatus>;
-    acessibilidade: FieldObserved<EvaluationStatus>;
+  topico1_estrutura?: {
+    pintura?: FieldObserved<EvaluationStatus>;
+    telhado?: FieldObserved<EvaluationStatus>;
+    piso?: FieldObserved<EvaluationStatus>;
+    portasJanelas?: FieldObserved<EvaluationStatus>;
+    iluminacao?: FieldObserved<EvaluationStatus>;
+    instalacoesEletricas?: FieldObserved<EvaluationStatus>;
+    instalacoesHidraulicas?: FieldObserved<EvaluationStatus>;
+    banheiros?: FieldObserved<EvaluationStatus>;
+    copaCozinha?: FieldObserved<EvaluationStatus>;
+    acessibilidade?: FieldObserved<EvaluationStatus>;
   };
 
   // Tópico 2 - Limpeza
-  topico2_limpeza: {
-    ambienteLimpo: FieldObserved<CleaningStatus>;
-    banheirosHigienizados: FieldObserved<CleaningStatus>;
-    coletaLixoAdequada: FieldObserved<CleaningStatus>;
-    organizacaoSalas: FieldObserved<CleaningStatus>;
-    produtosLimpezaDisponiveis: FieldObserved<CleaningStatus>;
+  topico2_limpeza?: {
+    ambienteLimpo?: FieldObserved<CleaningStatus>;
+    banheirosHigienizados?: FieldObserved<CleaningStatus>;
+    coletaLixoAdequada?: FieldObserved<CleaningStatus>;
+    organizacaoSalas?: FieldObserved<CleaningStatus>;
+    produtosLimpezaDisponiveis?: FieldObserved<CleaningStatus>;
   };
 
   // Tópico 3 - Materiais
-  topico3_materiais: ConsumableItem[];
+  topico3_materiais?: ConsumableItem[];
 
   // Tópico 4 - Equipamentos
-  topico4_equipamentos: EquipmentItem[];
+  topico4_equipamentos?: EquipmentItem[];
 
   // Tópico 5 - Recursos Humanos
-  topico5_rh: {
-    conselheirosPresentes: FieldObserved<string>;
-    equipeAdministrativaCompleta: FieldObserved<string>;
-    cumprimentoHorario: FieldObserved<string>;
-    escalasAfixadas: FieldObserved<string>;
-    necessidadeSubstituicao: FieldObserved<string>;
+  topico5_rh?: {
+    conselheirosPresentes?: FieldObserved<string>;
+    equipeAdministrativaCompleta?: FieldObserved<string>;
+    cumprimentoHorario?: FieldObserved<string>;
+    escalasAfixadas?: FieldObserved<string>;
+    necessidadeSubstituicao?: FieldObserved<string>;
   };
 
   // Tópico 6 - Atendimento ao Público
-  topico6_atendimento: {
-    atendimentoRegular: FieldObserved<'Sim' | 'Não'>;
-    salaReservada: FieldObserved<'Sim' | 'Não'>;
-    organizacaoAtendimento: FieldObserved<'Sim' | 'Não'>;
-    fluxoUsuario: FieldObserved<'Sim' | 'Não'>;
+  topico6_atendimento?: {
+    atendimentoRegular?: FieldObserved<'Sim' | 'Não'>;
+    salaReservada?: FieldObserved<'Sim' | 'Não'>;
+    organizacaoAtendimento?: FieldObserved<'Sim' | 'Não'>;
+    fluxoUsuario?: FieldObserved<'Sim' | 'Não'>;
   };
 
   // Tópico 7 - Segurança
-  topico7_seguranca: {
-    extintores: FieldObserved<EvaluationStatus>;
-    fechadura: FieldObserved<EvaluationStatus>;
-    portoes: FieldObserved<EvaluationStatus>;
-    iluminacaoExterna: FieldObserved<EvaluationStatus>;
+  topico7_seguranca?: {
+    extintores?: FieldObserved<EvaluationStatus>;
+    fechadura?: FieldObserved<EvaluationStatus>;
+    portoes?: FieldObserved<EvaluationStatus>;
+    iluminacaoExterna?: FieldObserved<EvaluationStatus>;
     camera?: FieldObserved<EvaluationStatus>;
   };
 
   // Tópico 8 - Demandas Identificadas
-  topico8_demandas: DemandItem[];
+  topico8_demandas?: DemandItem[];
 
   // Tópico 9 - Providências Tomadas
-  topico9_providencias: ActionItem[];
+  topico9_providencias?: ActionItem[];
 
   // Tópico 10 - Fotos
-  topico10_fotos: string[];
+  topico10_fotos?: string[];
 }
