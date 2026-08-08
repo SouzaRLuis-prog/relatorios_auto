@@ -1,7 +1,8 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { Groq } from 'groq-sdk';
 import { ReportData } from '@/models/report';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+// Inicializa o cliente da Groq com a chave do ambiente[cite: 2]
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || '' });
 
 export interface AIAnalysisResult {
   topico11_notas: {
@@ -12,8 +13,6 @@ export interface AIAnalysisResult {
     rh: number;
     atendimento: number;
     seguranca: number;
-    demandas: number;
-    providencias: number;
     mediaFinal: number;
   };
   topico12_conclusao: string;
@@ -22,25 +21,31 @@ export interface AIAnalysisResult {
 
 export async function generateAIReportSection(data: ReportData): Promise<AIAnalysisResult> {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    const resumoDados = {
+      unidade: data?.unidade,
+      dataVisita: data?.dataVisita,
+      responsavelVisita: data?.responsavelVisita,
+      topico1_estrutura: data?.topico1_estrutura,
+      topico2_limpeza: data?.topico2_limpeza,
+      topico3_materiais: data?.topico3_materiais,
+      topico4_equipamentos: data?.topico4_equipamentos,
+      topico5_rh: data?.topico5_rh,
+      topico6_atendimento: data?.topico6_atendimento,
+      topico7_seguranca: data?.topico7_seguranca,
+      observacoesGerais: data?.observacoesGerais || data?.observacoes
+    };
 
     const prompt = `
-Você é um auditor institucional sênior. Analise os seguintes dados coletados em uma visita técnica à unidade "${data?.unidade || ''}" na data ${data?.dataVisita || ''} pelo responsável "${data?.responsavelVisita || ''}".
+Você é um auditor institucional sênior. Analise os dados resumidos da visita técnica abaixo:
 
-DADOS DA VISITA:
-${JSON.stringify(data, null, 2)}
+${JSON.stringify(resumoDados, null, 2)}
 
-REGRAS DE RESPOSTA (Obrigatório retornar APENAS um JSON válido no formato especificado abaixo):
+REGRAS DE RESPOSTA (Retorne APENAS um JSON válido, sem blocos de markdown ou crases):
+1. **topico11_notas**: Atribua uma nota de 1 a 5 (números inteiros ou decimais) para cada um dos 7 tópicos (estrutura, limpeza, materiais, equipamentos, rh, atendimento, seguranca). Calcule a "mediaFinal" como a média aritmética simples dessas 7 notas.
+2. **topico12_conclusao**: Conclusão formal dos dados da visita. Restrição: Máximo de 7 linhas.
+3. **avaliacaoEvolucao**: Análise de evolução da unidade. Restrição: Máximo de 5 linhas.
 
-1. **topico11_notas**: Atribua uma nota de 1 a 5 (números inteiros ou decimais) para cada um dos 9 tópicos operacionais com base nos dados preenchidos. Calcule a "mediaFinal" como a média aritmética simples dessas 9 notas.
-2. **topico12_conclusao**: Escreva uma conclusão formal a respeito dos dados obtidos na visita.
-   - Restrição RÍGIDA: No MÁXIMO 7 linhas de texto.
-   - Estilo: Linguagem formal e objetiva.
-3. **avaliacaoEvolucao**: Escreva uma análise/solução de avaliação de evolução da unidade.
-   - Restrição RÍGIDA: No MÁXIMO 5 linhas de texto.
-   - Estilo: Linguagem formal e propositiva.
-
-Formato do JSON esperado (sem markdown extra de bloco de código):
+Formato exato do JSON esperado:
 {
   "topico11_notas": {
     "estrutura": 4,
@@ -50,28 +55,35 @@ Formato do JSON esperado (sem markdown extra de bloco de código):
     "rh": 5,
     "atendimento": 4,
     "seguranca": 3,
-    "demandas": 3,
-    "providencias": 4,
-    "mediaFinal": 3.9
+    "mediaFinal": 4.0
   },
-  "topico12_conclusao": "Sua conclusão de até 7 linhas aqui...",
-  "avaliacaoEvolucao": "Sua avaliação de evolução de até 5 linhas aqui..."
+  "topico12_conclusao": "Sua conclusão aqui...",
+  "avaliacaoEvolucao": "Sua avaliação aqui..."
 }
 `;
 
-    const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        { role: "system", content: "Você é um assistente especialista em retornar estritamente JSON válido." },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.3,
+    });
 
-    const cleanedJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+    const responseText = completion.choices[0]?.message?.content || '';
+    
+    // Tratamento robusto para extrair apenas o JSON caso o modelo retorne marcações extras
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    const cleanedJson = jsonMatch ? jsonMatch[0] : responseText.replace(/```json/g, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(cleanedJson);
 
-    // Garante que mediaFinal é calculada mesmo se a IA esquecer de enviar
     const notas = parsed?.topico11_notas || {};
     const soma = (notas.estrutura || 3) + (notas.limpeza || 3) + (notas.materiais || 3) + 
                  (notas.equipamentos || 3) + (notas.rh || 3) + (notas.atendimento || 3) + 
-                 (notas.seguranca || 3) + (notas.demandas || 3) + (notas.providencias || 3);
+                 (notas.seguranca || 3);
     
-    const mediaCalculada = Number((soma / 9).toFixed(1));
+    const mediaCalculada = Number((soma / 7).toFixed(1));
 
     return {
       topico11_notas: {
@@ -82,15 +94,14 @@ Formato do JSON esperado (sem markdown extra de bloco de código):
         rh: notas.rh ?? 3,
         atendimento: notas.atendimento ?? 3,
         seguranca: notas.seguranca ?? 3,
-        demandas: notas.demandas ?? 3,
-        providencias: notas.providencias ?? 3,
         mediaFinal: notas.mediaFinal ?? mediaCalculada,
       },
       topico12_conclusao: parsed.topico12_conclusao || "Conclusão registrada com base nos dados coletados em campo.",
       avaliacaoEvolucao: parsed.avaliacaoEvolucao || "Avaliação de evolução realizada sem observações críticas adicionais.",
     };
-  } catch (error) {
-    console.warn("Falha ao processar com IA, aplicando respostas do fallback de segurança.", error);
+  } catch (error: any) {
+    console.error("ERRO DETALHADO DA GROQ:", error?.message || error);
+    console.warn("Falha ao processar com IA, aplicando respostas do fallback de segurança.");
     return getFallbackAIResult(data);
   }
 }
@@ -105,8 +116,6 @@ function getFallbackAIResult(data: ReportData): AIAnalysisResult {
       rh: 3,
       atendimento: 3,
       seguranca: 3,
-      demandas: 3,
-      providencias: 3,
       mediaFinal: 3.0,
     },
     topico12_conclusao: `Relatório de visita técnica realizado na unidade ${data?.unidade || ''} em ${data?.dataVisita || ''} pelo responsável ${data?.responsavelVisita || ''}. (Relatório gerado em modo de contingência).`,

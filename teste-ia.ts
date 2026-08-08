@@ -24,21 +24,21 @@ function loadFonts() {
   }
 }
 
-// --- ESQUEMA DE CORES EXTRAÍDO DA LOGOMARCA INSTITUCIONAL ---
-const COLOR_PRIMARY = '#2B308B';    // Azul Índigo Escuro (Texto Prefeitura / Sec. Desenvolvimento Social)
-const COLOR_SECONDARY = '#30A3B1';  // Verde Água / Teal (Montes Claros e Ondas do Logo)
-const COLOR_ACCENT = '#FBB03B';     // Amarelo Sol (Acento visual)
-const COLOR_TEXT_DARK = '#2D3748';   // Grafite Escuro para leitura confortável
-const COLOR_TEXT_MUTED = '#718096';  // Cinza Neutro para dados vazios ou secundários
+// Cores baseadas na Identidade Visual oficial da Prefeitura de Montes Claros / Secretaria de Desenvolvimento Social
+const COLOR_PRIMARY = '#2E3084'; // Azul Índigo Institucional
+const COLOR_SECONDARY = '#359CA3'; // Verde Água / Turquesa
+const COLOR_TEXT_DARK = '#1F2937'; // Cinza Chumbo Escuro (mais suave que o preto puro)
+const COLOR_TEXT_MUTED = '#6B7280'; // Cinza Médio
 const COLOR_WHITE = '#FFFFFF';
-const COLOR_BG_LIGHT = '#F7FAFC';   // Fundo suave para o Card do Cabeçalho
-const COLOR_BG_ZEBRA = '#F1F5F9';   // Alternância de linhas das tabelas
-const COLOR_BORDER = '#E2E8F0';     // Borda sutil para tabelas e cards
+const COLOR_BG_ZEBRA = '#F9FAFB'; // Fundo sutil para linhas alternadas
+const COLOR_BG_SUMMARY = '#EEF2F6'; // Fundo para a média global
+const COLOR_BORDER = '#E5E7EB'; // Bordas cinza claro
+const COLOR_ERROR = '#DC2626';
 
 const PAGE_MARGIN = 40;
 const PAGE_SIZE = 'A4';
-const MAX_Y_BEFORE_BREAK = 720;
-const PHOTO_BREAK_PAGE_Y = 560;
+const MAX_Y_BEFORE_BREAK = 730; 
+const PHOTO_BREAK_PAGE_Y = 540;
 
 const ALIGN_LEFT = 'left' as const;
 const ALIGN_CENTER = 'center' as const;
@@ -57,6 +57,7 @@ export async function buildPdfReport(data: ReportData, aiData: AIAnalysisResult)
       const doc = new PDFDocument({
         margin: PAGE_MARGIN,
         size: PAGE_SIZE,
+        bufferPages: true,
       });
 
       doc.registerFont(FONT_FAMILY_REGULAR, regularFontBuffer!);
@@ -82,14 +83,15 @@ export async function buildPdfReport(data: ReportData, aiData: AIAnalysisResult)
       const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
       const startX = doc.page.margins.left;
 
-      let isFirstSection = true;
-
-      // Desenha o cabeçalho das seções com linha decorativa
       const drawSectionHeader = (title: string) => {
-        if (isFirstSection) {
-          isFirstSection = false;
-        } else {
+        // CORREÇÃO: Removido o doc.addPage() incondicional e cego.
+        // A página agora só quebra se o cursor estiver de fato muito próximo do fim da página.
+        if (doc.y > 680) {
           doc.addPage();
+        }
+
+        if (doc.y < PAGE_MARGIN) {
+          doc.y = PAGE_MARGIN;
         }
 
         doc
@@ -101,7 +103,7 @@ export async function buildPdfReport(data: ReportData, aiData: AIAnalysisResult)
             align: ALIGN_LEFT,
           });
 
-        const lineY = doc.y + 4;
+        const lineY = doc.y + 3;
         doc
           .strokeColor(COLOR_SECONDARY)
           .lineWidth(1.5)
@@ -112,77 +114,56 @@ export async function buildPdfReport(data: ReportData, aiData: AIAnalysisResult)
         doc.moveDown(0.8);
       };
 
-      // --- LOGOTIPO NO CABEÇALHO DA PÁGINA INICIAL ---
-      const logoPath = path.join(process.cwd(), 'public', 'Logo Governo - Desenvolvimento S. -5.png');
-      
-      if (fs.existsSync(logoPath)) {
-        doc.image(logoPath, startX, doc.y, {
-          fit: [pageWidth, 48],
-          align: ALIGN_CENTER,
-        });
-        doc.y += 55;
-      } else {
-        doc.moveDown(1);
+      // --- LOGOTIPO APENAS NA PRIMEIRA PÁGINA ---
+      try {
+        const logoPath = path.join(process.cwd(), 'public', 'Logo Governo - Desenvolvimento S. -5.png');
+        if (fs.existsSync(logoPath)) {
+          doc.image(logoPath, startX, doc.page.margins.top, { width: pageWidth, fit: [pageWidth, 40], align: ALIGN_CENTER });
+          doc.y = doc.page.margins.top + 45;
+        }
+      } catch (e) {
+        // Ignora caso a imagem não exista
       }
 
-      // Linha de acento no topo
-      doc
-        .strokeColor(COLOR_ACCENT)
-        .lineWidth(2)
-        .moveTo(startX, doc.y)
-        .lineTo(startX + pageWidth, doc.y)
-        .stroke();
-
-      doc.moveDown(1.2);
-
-      // --- TÍTULO PRINCIPAL DO RELATÓRIO ---
+      // --- TÍTULO E CAPA / METADADOS ---
       doc
         .fillColor(COLOR_PRIMARY)
         .fontSize(14)
         .font(FONT_FAMILY_BOLD)
-        .text('RELATÓRIO TÉCNICO DE INSPEÇÃO E ACOMPANHAMENTO', { align: ALIGN_CENTER })
-        .fontSize(10)
-        .fillColor(COLOR_SECONDARY)
-        .text('MONTES CLAROS - MG', { align: ALIGN_CENTER });
-
-      doc.moveDown(1.2);
-
-      // --- CARTÃO DE METADADOS / DADOS DA VISITA ---
-      const infoBoxY = doc.y;
-      const infoBoxHeight = 68;
+        .text('RELATÓRIO TÉCNICO DE INSPEÇÃO E ACOMPANHAMENTO', startX, doc.y, { align: ALIGN_CENTER, width: pageWidth });
 
       doc
-        .roundedRect(startX, infoBoxY, pageWidth, infoBoxHeight, 4)
-        .fillAndStroke(COLOR_BG_LIGHT, COLOR_BORDER);
+        .fillColor(COLOR_SECONDARY)
+        .fontSize(10)
+        .font(FONT_FAMILY_BOLD)
+        .text('SECRETARIA DE DESENVOLVIMENTO SOCIAL — MONTES CLAROS / MG', { align: ALIGN_CENTER, width: pageWidth });
 
-      const innerX = startX + 12;
-      let currentInfoY = infoBoxY + 10;
+      doc.moveDown(1);
 
-      doc.fontSize(8.5);
+      const infoBoxY = doc.y;
+      doc.rect(startX, infoBoxY, pageWidth, 62).fill(COLOR_BG_ZEBRA);
+      doc.rect(startX, infoBoxY, pageWidth, 62).strokeColor(COLOR_BORDER).lineWidth(0.5).stroke();
 
-      // Linha 1: Unidade Avaliada
-      doc.font(FONT_FAMILY_BOLD).fillColor(COLOR_PRIMARY).text('Unidade Avaliada: ', innerX, currentInfoY, { continued: true });
-      doc.font(FONT_FAMILY_BOLD).fillColor(COLOR_TEXT_DARK).text((data?.unidade || 'N/A').toUpperCase());
+      doc.fontSize(9).fillColor(COLOR_TEXT_DARK).font(FONT_FAMILY_REGULAR);
+      let currentTextY = infoBoxY + 8;
 
-      currentInfoY += 16;
+      doc.font(FONT_FAMILY_BOLD).text('Unidade Avaliada:', startX + 10, currentTextY, { continued: true });
+      doc.font(FONT_FAMILY_REGULAR).text(` ${(data?.unidade || 'N/A').toUpperCase()}`);
 
-      // Linha 2: Data, Período e Competência
-      doc.font(FONT_FAMILY_BOLD).fillColor(COLOR_PRIMARY).text('Data da Visita: ', innerX, currentInfoY, { continued: true });
-      doc.font(FONT_FAMILY_REGULAR).fillColor(COLOR_TEXT_DARK).text(`${data?.dataVisita || 'N/A'}    |    `, { continued: true });
-      doc.font(FONT_FAMILY_BOLD).fillColor(COLOR_PRIMARY).text('Período: ', { continued: true });
-      doc.font(FONT_FAMILY_REGULAR).fillColor(COLOR_TEXT_DARK).text(`${data?.periodo || 'N/A'}    |    `, { continued: true });
-      doc.font(FONT_FAMILY_BOLD).fillColor(COLOR_PRIMARY).text('Competência: ', { continued: true });
-      doc.font(FONT_FAMILY_REGULAR).fillColor(COLOR_TEXT_DARK).text(`${data?.mesAno || 'N/A'}`);
+      currentTextY += 15;
+      doc.font(FONT_FAMILY_BOLD).text('Data da Visita:', startX + 10, currentTextY, { continued: true });
+      doc.font(FONT_FAMILY_REGULAR).text(` ${data?.dataVisita || 'N/A'}    |    `, { continued: true });
+      doc.font(FONT_FAMILY_BOLD).text('Período:', { continued: true });
+      doc.font(FONT_FAMILY_REGULAR).text(` ${data?.periodo || 'N/A'}    |    `, { continued: true });
+      doc.font(FONT_FAMILY_BOLD).text('Competência:', { continued: true });
+      doc.font(FONT_FAMILY_REGULAR).text(` ${data?.mesAno || 'N/A'}`);
 
-      currentInfoY += 16;
+      currentTextY += 15;
+      doc.font(FONT_FAMILY_BOLD).text('Inspetor Responsável:', startX + 10, currentTextY, { continued: true });
+      doc.font(FONT_FAMILY_REGULAR).text(` ${data?.responsavelVisita || 'N/A'}`);
 
-      // Linha 3: Inspetor Responsável
-      doc.font(FONT_FAMILY_BOLD).fillColor(COLOR_PRIMARY).text('Inspetor Técnico Responsável: ', innerX, currentInfoY, { continued: true });
-      doc.font(FONT_FAMILY_REGULAR).fillColor(COLOR_TEXT_DARK).text(`${data?.responsavelVisita || 'N/A'}`);
+      doc.y = infoBoxY + 75;
 
-      doc.y = infoBoxY + infoBoxHeight + 15;
-
-      // --- RENDERIZAÇÃO DE TABELAS DOS TÓPICOS ---
       const renderTopicoEmTabela = (num: number, titulo: string, itemData: any) => {
         const isArrayData = Array.isArray(itemData);
         const hasData = isArrayData ? itemData.length > 0 : (itemData && typeof itemData === 'object' && Object.keys(itemData).length > 0);
@@ -192,26 +173,23 @@ export async function buildPdfReport(data: ReportData, aiData: AIAnalysisResult)
         if (!hasData) {
           doc
             .font(FONT_FAMILY_REGULAR)
-            .fontSize(8.5)
+            .fontSize(9)
             .fillColor(COLOR_TEXT_MUTED)
             .text(TEXT_EMPTY_ITEM, startX, doc.y, { align: ALIGN_LEFT });
           doc.moveDown(0.5);
           return;
         }
 
-        const colWidths = [pageWidth * 0.30, pageWidth * 0.22, pageWidth * 0.48];
+        const colWidths = [pageWidth * 0.30, pageWidth * 0.25, pageWidth * 0.45];
         let currentY = doc.y;
 
-        const drawTableHeader = (y: number) => {
-          doc.rect(startX, y, pageWidth, 22).fill(COLOR_PRIMARY);
-          doc.fillColor(COLOR_WHITE).font(FONT_FAMILY_BOLD).fontSize(8.5);
-          doc.text('Item / Componente', startX + 8, y + 6, { width: colWidths[0] - 12, align: ALIGN_LEFT });
-          doc.text('Status / Situação', startX + colWidths[0] + 5, y + 6, { width: colWidths[1] - 10, align: ALIGN_LEFT });
-          doc.text('Observações / Detalhes', startX + colWidths[0] + colWidths[1] + 5, y + 6, { width: colWidths[2] - 10, align: ALIGN_LEFT });
-        };
+        doc.rect(startX, currentY, pageWidth, 20).fill(COLOR_PRIMARY);
+        doc.fillColor(COLOR_WHITE).font(FONT_FAMILY_BOLD).fontSize(8.5);
+        doc.text('Item / Componente', startX + 6, currentY + 5, { width: colWidths[0] - 10, align: ALIGN_LEFT });
+        doc.text('Status / Situação', startX + colWidths[0] + 6, currentY + 5, { width: colWidths[1] - 10, align: ALIGN_LEFT });
+        doc.text('Observações / Detalhes', startX + colWidths[0] + colWidths[1] + 6, currentY + 5, { width: colWidths[2] - 10, align: ALIGN_LEFT });
 
-        drawTableHeader(currentY);
-        currentY += 22;
+        currentY += 20;
         let index = 0;
 
         if (isArrayData) {
@@ -225,14 +203,20 @@ export async function buildPdfReport(data: ReportData, aiData: AIAnalysisResult)
             const rowHeight = Math.max(
               doc.heightOfString(col1Text, { width: colWidths[0] - 12 }),
               doc.heightOfString(col3Text, { width: colWidths[2] - 12 }),
-              16
-            ) + 8;
+              18
+            ) + 6;
 
             if (currentY + rowHeight > MAX_Y_BEFORE_BREAK) {
               doc.addPage();
-              currentY = doc.page.margins.top;
-              drawTableHeader(currentY);
-              currentY += 22;
+              currentY = doc.y;
+
+              doc.rect(startX, currentY, pageWidth, 20).fill(COLOR_PRIMARY);
+              doc.fillColor(COLOR_WHITE).font(FONT_FAMILY_BOLD).fontSize(8.5);
+              doc.text('Item / Componente', startX + 6, currentY + 5, { width: colWidths[0] - 10, align: ALIGN_LEFT });
+              doc.text('Status / Situação', startX + colWidths[0] + 6, currentY + 5, { width: colWidths[1] - 10, align: ALIGN_LEFT });
+              doc.text('Observações / Detalhes', startX + colWidths[0] + colWidths[1] + 6, currentY + 5, { width: colWidths[2] - 10, align: ALIGN_LEFT });
+
+              currentY += 20;
             }
 
             const bgShading = index % 2 === 0 ? COLOR_BG_ZEBRA : COLOR_WHITE;
@@ -241,11 +225,11 @@ export async function buildPdfReport(data: ReportData, aiData: AIAnalysisResult)
             doc.rect(startX, currentY, pageWidth, rowHeight).strokeColor(COLOR_BORDER).lineWidth(0.5).stroke();
 
             doc.fillColor(COLOR_TEXT_DARK).font(FONT_FAMILY_BOLD).fontSize(8);
-            doc.text(col1Text, startX + 8, currentY + 5, { width: colWidths[0] - 12, align: ALIGN_LEFT });
+            doc.text(col1Text, startX + 6, currentY + 4, { width: colWidths[0] - 12, align: ALIGN_LEFT });
 
             doc.font(FONT_FAMILY_REGULAR);
-            doc.text(col2Text, startX + colWidths[0] + 5, currentY + 5, { width: colWidths[1] - 10, align: ALIGN_LEFT });
-            doc.text(col3Text, startX + colWidths[0] + colWidths[1] + 5, currentY + 5, { width: colWidths[2] - 12, align: ALIGN_LEFT });
+            doc.text(col2Text, startX + colWidths[0] + 6, currentY + 4, { width: colWidths[1] - 12, align: ALIGN_LEFT });
+            doc.text(col3Text, startX + colWidths[0] + colWidths[1] + 6, currentY + 4, { width: colWidths[2] - 12, align: ALIGN_LEFT });
 
             currentY += rowHeight;
             index++;
@@ -275,14 +259,20 @@ export async function buildPdfReport(data: ReportData, aiData: AIAnalysisResult)
             const rowHeight = Math.max(
               doc.heightOfString(chaveFormatada, { width: colWidths[0] - 12 }),
               doc.heightOfString(obsTexto, { width: colWidths[2] - 12 }),
-              16
-            ) + 8;
+              18
+            ) + 6;
 
             if (currentY + rowHeight > MAX_Y_BEFORE_BREAK) {
               doc.addPage();
-              currentY = doc.page.margins.top;
-              drawTableHeader(currentY);
-              currentY += 22;
+              currentY = doc.y;
+
+              doc.rect(startX, currentY, pageWidth, 20).fill(COLOR_PRIMARY);
+              doc.fillColor(COLOR_WHITE).font(FONT_FAMILY_BOLD).fontSize(8.5);
+              doc.text('Item / Componente', startX + 6, currentY + 5, { width: colWidths[0] - 10, align: ALIGN_LEFT });
+              doc.text('Status / Situação', startX + colWidths[0] + 6, currentY + 5, { width: colWidths[1] - 10, align: ALIGN_LEFT });
+              doc.text('Observações / Detalhes', startX + colWidths[0] + colWidths[1] + 6, currentY + 5, { width: colWidths[2] - 10, align: ALIGN_LEFT });
+
+              currentY += 20;
             }
 
             const bgShading = index % 2 === 0 ? COLOR_BG_ZEBRA : COLOR_WHITE;
@@ -291,11 +281,11 @@ export async function buildPdfReport(data: ReportData, aiData: AIAnalysisResult)
             doc.rect(startX, currentY, pageWidth, rowHeight).strokeColor(COLOR_BORDER).lineWidth(0.5).stroke();
 
             doc.fillColor(COLOR_TEXT_DARK).font(FONT_FAMILY_BOLD).fontSize(8);
-            doc.text(chaveFormatada, startX + 8, currentY + 5, { width: colWidths[0] - 12, align: ALIGN_LEFT });
+            doc.text(chaveFormatada, startX + 6, currentY + 4, { width: colWidths[0] - 12, align: ALIGN_LEFT });
 
             doc.font(FONT_FAMILY_REGULAR);
-            doc.text(statusTexto, startX + colWidths[0] + 5, currentY + 5, { width: colWidths[1] - 10, align: ALIGN_LEFT });
-            doc.text(obsTexto, startX + colWidths[0] + colWidths[1] + 5, currentY + 5, { width: colWidths[2] - 12, align: ALIGN_LEFT });
+            doc.text(statusTexto, startX + colWidths[0] + 6, currentY + 4, { width: colWidths[1] - 12, align: ALIGN_LEFT });
+            doc.text(obsTexto, startX + colWidths[0] + colWidths[1] + 6, currentY + 4, { width: colWidths[2] - 12, align: ALIGN_LEFT });
 
             currentY += rowHeight;
             index++;
@@ -315,41 +305,41 @@ export async function buildPdfReport(data: ReportData, aiData: AIAnalysisResult)
       renderTopicoEmTabela(8, 'Levantamento de Demandas', (data as any)?.topico8_demandas);
       renderTopicoEmTabela(9, 'Plano de Providências e Recomendações', (data as any)?.topico9_providencias);
 
-      // --- TÓPICO 10: FOTOS ---
       drawSectionHeader('10. Registro Fotográfico');
       const fotos = (data?.topico10_fotos || []).filter(
         (img) => typeof img === 'string' && img.trim().length > 0
       );
 
       if (fotos.length === 0) {
-        doc.font(FONT_FAMILY_REGULAR).fontSize(8.5).fillColor(COLOR_TEXT_MUTED).text(TEXT_EMPTY_PHOTOS, startX, doc.y, { align: ALIGN_LEFT });
+        doc.font(FONT_FAMILY_REGULAR).fontSize(9).fillColor(COLOR_TEXT_MUTED).text(TEXT_EMPTY_PHOTOS, startX, doc.y, { align: ALIGN_LEFT });
         doc.moveDown(1);
       } else {
         fotos.forEach((base64Img) => {
           try {
-            if (doc.y > PHOTO_BREAK_PAGE_Y) doc.addPage();
+            if (doc.y > PHOTO_BREAK_PAGE_Y) {
+              doc.addPage();
+            }
             const cleanBase64 = base64Img.replace(/^data:image\/(png|jpeg|jpg);base64,/, '');
             const imgBuffer = Buffer.from(cleanBase64, 'base64');
-            doc.image(imgBuffer, { fit: [420, 260], align: ALIGN_CENTER });
-            doc.moveDown(1.2);
+            doc.image(imgBuffer, { fit: [pageWidth, 240], align: ALIGN_CENTER });
+            doc.moveDown(1);
           } catch (e) {
-            doc.font(FONT_FAMILY_REGULAR).fillColor('#C00000').text('[Erro ao carregar imagem]', startX, doc.y, { align: ALIGN_LEFT });
+            doc.font(FONT_FAMILY_REGULAR).fillColor(COLOR_ERROR).text('[Erro ao carregar imagem]', startX, doc.y, { align: ALIGN_LEFT });
           }
         });
       }
 
-      // --- TÓPICO 11: INDICADORES ---
       drawSectionHeader('11. Consolidação dos Indicadores da Unidade');
 
-      const colWidths11 = [pageWidth * 0.70, pageWidth * 0.30];
+      const colWidths11 = [pageWidth * 0.7, pageWidth * 0.3];
       let currentY11 = doc.y;
 
-      doc.rect(startX, currentY11, pageWidth, 22).fill(COLOR_PRIMARY);
+      doc.rect(startX, currentY11, pageWidth, 20).fill(COLOR_PRIMARY);
       doc.fillColor(COLOR_WHITE).font(FONT_FAMILY_BOLD).fontSize(8.5);
-      doc.text('Área Avaliada', startX + 10, currentY11 + 6, { align: ALIGN_LEFT });
-      doc.text('Desempenho', startX + colWidths11[0] + 5, currentY11 + 6, { align: ALIGN_CENTER, width: colWidths11[1] - 10 });
+      doc.text('Área Avaliada', startX + 6, currentY11 + 5, { align: ALIGN_LEFT });
+      doc.text('Desempenho', startX + colWidths11[0] + 6, currentY11 + 5, { align: ALIGN_CENTER, width: colWidths11[1] - 12 });
 
-      currentY11 += 22;
+      currentY11 += 20;
 
       const listaNotas = [
         ['Estrutura Física', notas.estrutura],
@@ -363,36 +353,47 @@ export async function buildPdfReport(data: ReportData, aiData: AIAnalysisResult)
 
       listaNotas.forEach(([item, nota], idx) => {
         const bg = idx % 2 === 0 ? COLOR_BG_ZEBRA : COLOR_WHITE;
-        doc.rect(startX, currentY11, pageWidth, 20).fill(bg);
-        doc.rect(startX, currentY11, pageWidth, 20).strokeColor(COLOR_BORDER).lineWidth(0.5).stroke();
+        doc.rect(startX, currentY11, pageWidth, 18).fill(bg);
+        doc.rect(startX, currentY11, pageWidth, 18).strokeColor(COLOR_BORDER).lineWidth(0.5).stroke();
 
         doc.fillColor(COLOR_TEXT_DARK).font(FONT_FAMILY_BOLD).fontSize(8);
-        doc.text(String(item), startX + 10, currentY11 + 5, { align: ALIGN_LEFT });
+        doc.text(String(item), startX + 6, currentY11 + 4, { align: ALIGN_LEFT });
         doc.font(FONT_FAMILY_REGULAR);
-        doc.text(`${nota} / 5`, startX + colWidths11[0] + 5, currentY11 + 5, { align: ALIGN_CENTER, width: colWidths11[1] - 10 });
+        doc.text(`${nota} / 5`, startX + colWidths11[0] + 6, currentY11 + 4, { align: ALIGN_CENTER, width: colWidths11[1] - 12 });
 
-        currentY11 += 20;
+        currentY11 += 18;
       });
 
-      // Linha de Destaque da Média Global
-      doc.rect(startX, currentY11, pageWidth, 22).fill(COLOR_SECONDARY);
-      doc.rect(startX, currentY11, pageWidth, 22).strokeColor(COLOR_SECONDARY).lineWidth(0.5).stroke();
-      doc.fillColor(COLOR_WHITE).font(FONT_FAMILY_BOLD).fontSize(9);
-      doc.text('Média Global da Unidade', startX + 10, currentY11 + 6, { align: ALIGN_LEFT });
-      doc.text(`${mediaFinalNum.toFixed(1)} / 5.0`, startX + colWidths11[0] + 5, currentY11 + 6, { align: ALIGN_CENTER, width: colWidths11[1] - 10 });
+      doc.rect(startX, currentY11, pageWidth, 20).fill(COLOR_BG_SUMMARY);
+      doc.rect(startX, currentY11, pageWidth, 20).strokeColor(COLOR_BORDER).lineWidth(0.5).stroke();
+      doc.fillColor(COLOR_PRIMARY).font(FONT_FAMILY_BOLD).fontSize(9);
+      doc.text('Média Global da Unidade', startX + 6, currentY11 + 5, { align: ALIGN_LEFT });
+      doc.text(`${mediaFinalNum.toFixed(1)} / 5.0`, startX + colWidths11[0] + 6, currentY11 + 5, { align: ALIGN_CENTER, width: colWidths11[1] - 12 });
 
       doc.y = currentY11 + 25;
 
-      // --- TÓPICO 12: CONCLUSÃO E SÍNTESE ---
       drawSectionHeader('12. Síntese Técnica e Conclusão');
       doc.font(FONT_FAMILY_REGULAR).fontSize(9).fillColor(COLOR_TEXT_DARK);
-      doc.text(aiData?.topico12_conclusao || TEXT_EMPTY_CONCLUSION, startX, doc.y, { align: ALIGN_JUSTIFY, width: pageWidth, lineGap: 3 });
+      doc.text(aiData?.topico12_conclusao || TEXT_EMPTY_CONCLUSION, startX, doc.y, { align: ALIGN_JUSTIFY, width: pageWidth });
 
-      doc.moveDown(1.2);
+      doc.moveDown(0.8);
       doc.font(FONT_FAMILY_BOLD).fontSize(9.5).fillColor(COLOR_PRIMARY).text('Análise Comparativa e Evolução do Período', startX, doc.y, { align: ALIGN_LEFT });
-      doc.moveDown(0.4);
+      doc.moveDown(0.3);
       doc.font(FONT_FAMILY_REGULAR).fontSize(9).fillColor(COLOR_TEXT_DARK);
-      doc.text(aiData?.avaliacaoEvolucao || TEXT_EMPTY_EVOLUTION, startX, doc.y, { align: ALIGN_JUSTIFY, width: pageWidth, lineGap: 3 });
+      doc.text(aiData?.avaliacaoEvolucao || TEXT_EMPTY_EVOLUTION, startX, doc.y, { align: ALIGN_JUSTIFY, width: pageWidth });
+
+      const range = doc.bufferedPageRange();
+      for (let i = range.start; i < range.start + range.count; i++) {
+        doc.switchToPage(i);
+        
+        const footerY = doc.page.height - 35;
+        
+        doc.strokeColor(COLOR_BORDER).lineWidth(0.5).moveTo(startX, footerY).lineTo(startX + pageWidth, footerY).stroke();
+
+        doc.fontSize(7.5).fillColor(COLOR_TEXT_MUTED).font(FONT_FAMILY_REGULAR);
+        doc.text('Prefeitura de Montes Claros — Secretaria de Desenvolvimento Social', startX, footerY + 6, { align: ALIGN_LEFT, width: pageWidth * 0.7 });
+        doc.text(`Página ${i + 1} de ${range.count}`, startX + pageWidth * 0.7, footerY + 6, { align: 'right', width: pageWidth * 0.3 });
+      }
 
       doc.end();
     } catch (error) {
