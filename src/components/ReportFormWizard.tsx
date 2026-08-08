@@ -185,8 +185,7 @@ export function ReportFormWizard() {
         {currentStep === 7 && <Step7Security data={formData} onChange={updateFormData} />}
         {currentStep === 8 && <Step8Demands data={formData} onChange={updateFormData} />}
         {currentStep === 9 && <Step9Actions data={formData} onChange={updateFormData} />}
-        {currentStep === 10 && <Step10Photos photos={formData.topico10_fotos} onChange={photos => updateFormData({ topico10_fotos: photos })} />}
-      </div>
+        {currentStep === 10 && <Step10Photos photos={formData.topico10_fotos || []} onChange={updateFormData} />}      </div>
 
       {statusMessage && (
         <div className="my-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm font-medium border border-blue-200 dark:border-blue-800">
