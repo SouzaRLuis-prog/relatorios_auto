@@ -1,7 +1,7 @@
 export type EvaluationStatus = 'Adequado' | 'Regular' | 'Inadequado';
-export type CleaningStatus = 'Sim' | 'Parcial' | 'Não';
-export type ConsumableStatus = 'Suficiente' | 'Baixo Estoque' | 'Em falta';
-export type EquipmentStatus = 'Em funcionamento' | 'Necessita manutenção' | 'Inoperante';
+export type MaterialStatus = 'Suficiente' | 'Insuficiente' | 'Em Falta';
+export type ConsumableStatus = MaterialStatus; // Alias para retrocompatibilidade
+export type EquipmentStatus = 'Em funcionamento' | 'Com defeito' | 'Manutenção necessária';
 export type PriorityLevel = 'Alta' | 'Média' | 'Baixa';
 export type DemandSituation = 'Pendente' | 'Em andamento' | 'Concluído';
 
@@ -13,7 +13,7 @@ export interface FieldObserved<T = string> {
 export interface ConsumableItem {
   id: string;
   name: string;
-  status: ConsumableStatus;
+  status: MaterialStatus;
   observation?: string;
 }
 
@@ -63,13 +63,12 @@ export interface ReportData {
     acessibilidade?: FieldObserved<EvaluationStatus>;
   };
 
-  // Tópico 2 - Limpeza
+  // Tópico 2 - Limpeza e Conservação
   topico2_limpeza?: {
-    ambienteLimpo?: FieldObserved<CleaningStatus>;
-    banheirosHigienizados?: FieldObserved<CleaningStatus>;
-    coletaLixoAdequada?: FieldObserved<CleaningStatus>;
-    organizacaoSalas?: FieldObserved<CleaningStatus>;
-    produtosLimpezaDisponiveis?: FieldObserved<CleaningStatus>;
+    limpezaGeral?: FieldObserved<EvaluationStatus>;
+    conservacaoMobiliario?: FieldObserved<EvaluationStatus>;
+    recolhimentoLixo?: FieldObserved<EvaluationStatus>;
+    higienizacaoBanheiros?: FieldObserved<EvaluationStatus>;
   };
 
   // Tópico 3 - Materiais

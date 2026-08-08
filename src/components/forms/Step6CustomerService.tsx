@@ -12,16 +12,19 @@ interface Props {
 const serviceItems = [
   { key: 'atendimentoRegular', label: 'Atendimento Regular' },
   { key: 'salaReservada', label: 'Sala Reservada para o Atendimento' },
-  { key: 'organizacaoAtendimento', label: 'Organização do atendimento' },
+  { key: 'organizacaoAtendimento', label: 'Organização do Atendimento' },
   { key: 'fluxoUsuario', label: 'Fluxo de Usuários' },
 ] as const;
 
 export function Step6CustomerService({ data, onChange }: Props) {
   const handleUpdate = (key: string, field: 'status' | 'observation', value: string) => {
+    const currentAtendimento = data?.topico6_atendimento || {};
+    const currentItem = currentAtendimento[key as keyof typeof currentAtendimento] || {};
+
     const updated = {
-      ...data.topico6_atendimento,
+      ...currentAtendimento,
       [key]: {
-        ...data.topico6_atendimento[key as keyof typeof data.topico6_atendimento],
+        ...currentItem,
         [field]: value,
       },
     };
@@ -36,7 +39,7 @@ export function Step6CustomerService({ data, onChange }: Props) {
 
       <div className="space-y-4">
         {serviceItems.map(({ key, label }) => {
-          const current = data.topico6_atendimento[key as keyof typeof data.topico6_atendimento];
+          const current = data?.topico6_atendimento?.[key as keyof typeof data.topico6_atendimento];
           return (
             <div key={key} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">

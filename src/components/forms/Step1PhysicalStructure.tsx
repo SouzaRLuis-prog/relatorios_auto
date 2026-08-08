@@ -24,10 +24,13 @@ const items = [
 
 export function Step1PhysicalStructure({ data, onChange }: Props) {
   const handleUpdate = (key: string, field: 'status' | 'observation', value: string) => {
+    const currentEstrutura = data?.topico1_estrutura || {};
+    const currentItem = currentEstrutura[key as keyof typeof currentEstrutura] || {};
+
     const updatedTopic = {
-      ...data.topico1_estrutura,
+      ...currentEstrutura,
       [key]: {
-        ...data.topico1_estrutura[key as keyof typeof data.topico1_estrutura],
+        ...currentItem,
         [field]: value,
       },
     };
@@ -42,14 +45,14 @@ export function Step1PhysicalStructure({ data, onChange }: Props) {
 
       <div className="space-y-4">
         {items.map(({ key, label }) => {
-          const current = data.topico1_estrutura[key as keyof typeof data.topico1_estrutura];
+          const current = data?.topico1_estrutura?.[key as keyof typeof data.topico1_estrutura];
           return (
             <div key={key} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <span className="font-semibold text-slate-800 dark:text-slate-200">{label}</span>
                 <select
                   value={current?.status || 'Adequado'}
-                  onChange={e => handleUpdate(key, 'status', e.target.value)}
+                  onChange={e => handleUpdate(key, 'status', e.target.value as EvaluationStatus)}
                   className="p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                 >
                   <option value="Adequado">Adequado</option>

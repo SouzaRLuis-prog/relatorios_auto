@@ -17,15 +17,29 @@ export function Step8Demands({ data, onChange }: Props) {
 
   const handleAdd = () => {
     if (!demanda.trim()) return;
-    const newItem = { id: crypto.randomUUID(), demanda, prioridade, setorResponsavel, situacao };
-    onChange({ topico8_demandas: [...data.topico8_demandas, newItem] });
+    const newItem = {
+      id: crypto.randomUUID(),
+      demanda: demanda.trim(),
+      prioridade,
+      setorResponsavel: setorResponsavel.trim(),
+      situacao,
+    };
+    const currentList = data?.topico8_demandas || [];
+    onChange({ topico8_demandas: [...currentList, newItem] });
     setDemanda('');
     setSetorResponsavel('');
+    setPrioridade('Média');
+    setSituacao('Pendente');
   };
 
   const handleRemove = (id: string) => {
-    onChange({ topico8_demandas: data.topico8_demandas.filter(item => item.id !== id) });
+    const currentList = data?.topico8_demandas || [];
+    onChange({
+      topico8_demandas: currentList.filter(item => item.id !== id),
+    });
   };
+
+  const demandsList = data?.topico8_demandas || [];
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -39,13 +53,13 @@ export function Step8Demands({ data, onChange }: Props) {
           placeholder="Descrição da Demanda"
           value={demanda}
           onChange={e => setDemanda(e.target.value)}
-          className="w-full p-2.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none"
+          className="w-full p-2.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
         />
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <select
             value={prioridade}
             onChange={e => setPrioridade(e.target.value as PriorityLevel)}
-            className="p-2.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none"
+            className="p-2.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="Alta">Alta</option>
             <option value="Média">Média</option>
@@ -57,13 +71,13 @@ export function Step8Demands({ data, onChange }: Props) {
             placeholder="Setor Responsável"
             value={setorResponsavel}
             onChange={e => setSetorResponsavel(e.target.value)}
-            className="p-2.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none"
+            className="p-2.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
           />
 
           <select
             value={situacao}
             onChange={e => setSituacao(e.target.value as DemandSituation)}
-            className="p-2.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none"
+            className="p-2.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="Pendente">Pendente</option>
             <option value="Em andamento">Em andamento</option>
@@ -73,24 +87,30 @@ export function Step8Demands({ data, onChange }: Props) {
         <button
           type="button"
           onClick={handleAdd}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
         >
           <Plus className="w-4 h-4" /> Adicionar Demanda
         </button>
       </div>
 
       <div className="space-y-2">
-        {data.topico8_demandas.map(item => (
-          <div key={item.id} className="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800">
-            <div>
-              <span className="font-semibold text-slate-800 dark:text-slate-100">{item.demanda}</span>
-              <p className="text-xs text-slate-500 mt-1">Setor: {item.setorResponsavel || 'N/A'} | Prioridade: {item.prioridade} | Status: {item.situacao}</p>
+        {demandsList.length === 0 ? (
+          <p className="text-sm text-slate-500 dark:text-slate-400 italic text-center py-4">
+            Nenhuma demanda cadastrada até o momento.
+          </p>
+        ) : (
+          demandsList.map(item => (
+            <div key={item.id} className="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800">
+              <div>
+                <span className="font-semibold text-slate-800 dark:text-slate-100">{item.demanda}</span>
+                <p className="text-xs text-slate-500 mt-1">Setor: {item.setorResponsavel || 'N/A'} | Prioridade: {item.prioridade} | Status: {item.situacao}</p>
+              </div>
+              <button type="button" onClick={() => handleRemove(item.id)} className="text-red-500 p-1 hover:opacity-80">
+                <Trash2 className="w-4 h-4" />
+              </button>
             </div>
-            <button type="button" onClick={() => handleRemove(item.id)} className="text-red-500 p-1 hover:opacity-80">
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

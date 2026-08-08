@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { ReportData } from '@/models/report';
-import { Building2, Calendar, Clock, User } from 'lucide-react';
+import { Building2 } from 'lucide-react';
 
 interface Props {
   data: ReportData;
@@ -20,8 +20,8 @@ export function Step0General({ data, onChange }: Props) {
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Unidade</label>
           <select
-            value={data.unidade}
-            onChange={e => onChange({ unidade: e.target.value as any })}
+            value={data?.unidade || 'Conselho Tutelar 1'}
+            onChange={e => onChange({ unidade: e.target.value as ReportData['unidade'] })}
             className="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none"
           >
             <option value="Conselho Tutelar 1">Conselho Tutelar 1</option>
@@ -36,7 +36,7 @@ export function Step0General({ data, onChange }: Props) {
           <input
             type="text"
             placeholder="Ex: Matutino / Vespertino"
-            value={data.periodo}
+            value={data?.periodo || ''}
             onChange={e => onChange({ periodo: e.target.value })}
             className="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none"
           />
@@ -47,7 +47,7 @@ export function Step0General({ data, onChange }: Props) {
           <input
             type="text"
             placeholder="Ex: 08/2026"
-            value={data.mesAno}
+            value={data?.mesAno || ''}
             onChange={e => onChange({ mesAno: e.target.value })}
             className="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none"
           />
@@ -57,7 +57,7 @@ export function Step0General({ data, onChange }: Props) {
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Data da Visita</label>
           <input
             type="date"
-            value={data.dataVisita}
+            value={data?.dataVisita || ''}
             onChange={e => onChange({ dataVisita: e.target.value })}
             className="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none"
           />
@@ -68,7 +68,7 @@ export function Step0General({ data, onChange }: Props) {
           <input
             type="text"
             placeholder="Nome do Fiscal / Auditor"
-            value={data.responsavelVisita}
+            value={data?.responsavelVisita || ''}
             onChange={e => onChange({ responsavelVisita: e.target.value })}
             className="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none"
           />

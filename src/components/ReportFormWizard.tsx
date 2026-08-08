@@ -5,7 +5,6 @@ import { ReportData } from '@/models/report';
 import { DarkModeToggle } from '@/components/ui/DarkModeToggle';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 
-// Imports padronizados dos passos
 import { Step0General } from './forms/Step0General';
 import { Step1PhysicalStructure } from './forms/Step1PhysicalStructure';
 import { Step2Cleaning } from './forms/Step2Cleaning';
@@ -40,11 +39,10 @@ const initialFormData: ReportData = {
     acessibilidade: { status: 'Adequado' },
   },
   topico2_limpeza: {
-    ambienteLimpo: { status: 'Sim' },
-    banheirosHigienizados: { status: 'Sim' },
-    coletaLixoAdequada: { status: 'Sim' },
-    organizacaoSalas: { status: 'Sim' },
-    produtosLimpezaDisponiveis: { status: 'Sim' },
+    limpezaGeral: { status: 'Adequado' },
+    conservacaoMobiliario: { status: 'Adequado' },
+    recolhimentoLixo: { status: 'Adequado' },
+    higienizacaoBanheiros: { status: 'Adequado' },
   },
   topico3_materiais: [],
   topico4_equipamentos: [],
@@ -66,6 +64,7 @@ const initialFormData: ReportData = {
     fechadura: { status: 'Adequado' },
     portoes: { status: 'Adequado' },
     iluminacaoExterna: { status: 'Adequado' },
+    camera: { status: 'Adequado' },
   },
   topico8_demandas: [],
   topico9_providencias: [],
@@ -110,7 +109,7 @@ export function ReportFormWizard() {
 
   const handleSubmit = async () => {
     setIsLoading(true);
-    setStatusMessage('Sintetizando tópicos com Inteligência Artificial e gerando .PDF...');
+    setStatusMessage('Sintetizando tópicos e gerando o relatório em PDF...');
 
     try {
       const res = await fetch('/api/generate-report', {
@@ -122,24 +121,23 @@ export function ReportFormWizard() {
       const result = await res.json();
       if (!result.success) throw new Error(result.error);
 
-      setStatusMessage('Iniciando download do relatório em formato PDF ...');
+      setStatusMessage('Iniciando download do relatório...');
       const byteCharacters = atob(result.base64File);
       const byteNumbers = new Array(byteCharacters.length);
       for (let i = 0; i < byteCharacters.length; i++) {
         byteNumbers[i] = byteCharacters.charCodeAt(i);
       }
       const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], {
-        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      });
+      const blob = new Blob([byteArray], { type: 'application/pdf' });
 
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = result.fileName;
       a.click();
+      window.URL.revokeObjectURL(url);
 
-      setStatusMessage('Enviando para o Google Drive e registrando na planilha...');
+      setStatusMessage('Enviando cópia para o Google Drive e registrando na planilha...');
       await uploadToGoogleDriveAndSheet({
         fileName: result.fileName,
         fileBase64: result.base64File,
@@ -148,7 +146,7 @@ export function ReportFormWizard() {
         responsavel: result.responsavel,
       });
 
-      setStatusMessage('Relatório finalizado com sucesso!');
+      setStatusMessage('Relatório finalizado e enviado com sucesso!');
     } catch (err: any) {
       console.error(err);
       setStatusMessage(`Erro durante o processamento: ${err.message}`);
@@ -162,7 +160,7 @@ export function ReportFormWizard() {
       <header className="flex items-center justify-between pb-6 border-b border-slate-200 dark:border-slate-800 mb-6">
         <div>
           <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-slate-50 flex items-center gap-2">
-            Visitas aos Conselhos Tutelares 
+            Visitas aos Conselhos Tutelares
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
             Montes Claros - MG
@@ -173,7 +171,6 @@ export function ReportFormWizard() {
 
       <ProgressBar currentStep={currentStep} totalSteps={STEP_TITLES.length} stepTitle={STEP_TITLES[currentStep]} />
 
-      {/* Renderização dinâmica com animação Fade-In */}
       <div key={currentStep} className="min-h-[380px] py-2">
         {currentStep === 0 && <Step0General data={formData} onChange={updateFormData} />}
         {currentStep === 1 && <Step1PhysicalStructure data={formData} onChange={updateFormData} />}
@@ -185,12 +182,7 @@ export function ReportFormWizard() {
         {currentStep === 7 && <Step7Security data={formData} onChange={updateFormData} />}
         {currentStep === 8 && <Step8Demands data={formData} onChange={updateFormData} />}
         {currentStep === 9 && <Step9Actions data={formData} onChange={updateFormData} />}
-        {currentStep === 10 && (
-          <Step10Photos 
-            photos={formData.topico10_fotos || []} 
-            onChange={(photos) => updateFormData({ topico10_fotos: photos })} 
-          />
-        )}
+        {currentStep === 10 && <Step10Photos data={formData} onChange={updateFormData} />}
       </div>
 
       {statusMessage && (

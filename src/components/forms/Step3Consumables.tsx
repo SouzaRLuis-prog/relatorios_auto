@@ -1,88 +1,70 @@
 'use client';
 
-import React, { useState } from 'react';
-import { ReportData, ConsumableStatus } from '@/models/report';
-import { Package, Plus, Trash2 } from 'lucide-react';
+import React from 'react';
+import { ReportData, EvaluationStatus } from '@/models/report';
+import { Sparkles } from 'lucide-react';
 
 interface Props {
   data: ReportData;
   onChange: (data: Partial<ReportData>) => void;
 }
 
-export function Step3Consumables({ data, onChange }: Props) {
-  const [name, setName] = useState('');
-  const [status, setStatus] = useState<ConsumableStatus>('Suficiente');
-  const [observation, setObservation] = useState('');
+const items = [
+  { key: 'limpezaGeral', label: 'Limpeza Geral' },
+  { key: 'conservacaoMobiliario', label: 'Conservação de Mobiliário' },
+  { key: 'recolhimentoLixo', label: 'Recolhimento de Lixo' },
+  { key: 'higienizacaoBanheiros', label: 'Higienização dos Banheiros' },
+] as const;
 
-  const handleAdd = () => {
-    if (!name.trim()) return;
-    const newItem = { id: crypto.randomUUID(), name, status, observation };
-    onChange({ topico3_materiais: [...data.topico3_materiais, newItem] });
-    setName('');
-    setObservation('');
-    setStatus('Suficiente');
-  };
+export function Step2Cleaning({ data, onChange }: Props) {
+  const handleUpdate = (key: string, field: 'status' | 'observation', value: string) => {
+    const currentLimpeza = data?.topico2_limpeza || {};
+    const currentItem = currentLimpeza[key as keyof typeof currentLimpeza] || {};
 
-  const handleRemove = (id: string) => {
-    onChange({ topico3_materiais: data.topico3_materiais.filter(item => item.id !== id) });
+    const updatedTopic = {
+      ...currentLimpeza,
+      [key]: {
+        ...currentItem,
+        [field]: value,
+      },
+    };
+    onChange({ topico2_limpeza: updatedTopic });
   };
 
   return (
     <div className="space-y-6 animate-fade-in">
       <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-        <Package className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Tópico 3 - Materiais de Consumo
+        <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Tópico 2 - Limpeza e Conservação
       </h2>
 
-      {/* Formulário de Adição */}
-      <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <input
-            type="text"
-            placeholder="Nome do Material (ex: Papel A4)"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            className="p-2.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none"
-          />
-          <select
-            value={status}
-            onChange={e => setStatus(e.target.value as ConsumableStatus)}
-            className="p-2.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none"
-          >
-            <option value="Suficiente">Suficiente</option>
-            <option value="Baixo Estoque">Baixo Estoque</option>
-            <option value="Em falta">Em falta</option>
-          </select>
-        </div>
-        <input
-          type="text"
-          placeholder="Observação (opcional)"
-          value={observation}
-          onChange={e => setObservation(e.target.value)}
-          className="w-full p-2.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none"
-        />
-        <button
-          type="button"
-          onClick={handleAdd}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700"
-        >
-          <Plus className="w-4 h-4" /> Adicionar Material
-        </button>
-      </div>
+      <div className="space-y-4">
+        {items.map(({ key, label }) => {
+          const current = data?.topico2_limpeza?.[key as keyof typeof data.topico2_limpeza];
+          return (
+            <div key={key} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <span className="font-semibold text-slate-800 dark:text-slate-200">{label}</span>
+                <select
+                  value={current?.status || 'Adequado'}
+                  onChange={e => handleUpdate(key, 'status', e.target.value as EvaluationStatus)}
+                  className="p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                >
+                  <option value="Adequado">Adequado</option>
+                  <option value="Regular">Regular</option>
+                  <option value="Inadequado">Inadequado</option>
+                </select>
+              </div>
 
-      {/* Lista de Itens */}
-      <div className="space-y-2">
-        {data.topico3_materiais.map(item => (
-          <div key={item.id} className="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800">
-            <div>
-              <span className="font-semibold text-slate-800 dark:text-slate-100">{item.name}</span>
-              <span className="ml-2 text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">{item.status}</span>
-              {item.observation && <p className="text-xs text-slate-500 mt-1">{item.observation}</p>}
+              <input
+                type="text"
+                placeholder="Observação (opcional)"
+                value={current?.observation || ''}
+                onChange={e => handleUpdate(key, 'observation', e.target.value)}
+                className="w-full p-2.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none"
+              />
             </div>
-            <button type="button" onClick={() => handleRemove(item.id)} className="text-red-500 p-1 hover:opacity-80">
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

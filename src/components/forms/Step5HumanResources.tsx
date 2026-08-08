@@ -19,10 +19,13 @@ const rhFields = [
 
 export function Step5HumanResources({ data, onChange }: Props) {
   const handleUpdate = (key: string, field: 'status' | 'observation', value: string) => {
+    const currentRh = data?.topico5_rh || {};
+    const currentItem = currentRh[key as keyof typeof currentRh] || {};
+
     const updated = {
-      ...data.topico5_rh,
+      ...currentRh,
       [key]: {
-        ...data.topico5_rh[key as keyof typeof data.topico5_rh],
+        ...currentItem,
         [field]: value,
       },
     };
@@ -37,7 +40,7 @@ export function Step5HumanResources({ data, onChange }: Props) {
 
       <div className="space-y-4">
         {rhFields.map(({ key, label }) => {
-          const current = data.topico5_rh[key as keyof typeof data.topico5_rh];
+          const current = data?.topico5_rh?.[key as keyof typeof data.topico5_rh];
           return (
             <div key={key} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 space-y-3">
               <span className="font-semibold text-slate-800 dark:text-slate-200 block">{label}</span>
@@ -47,14 +50,14 @@ export function Step5HumanResources({ data, onChange }: Props) {
                   placeholder="Situação"
                   value={current?.status || ''}
                   onChange={e => handleUpdate(key, 'status', e.target.value)}
-                  className="p-2.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none"
+                  className="p-2.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <input
                   type="text"
                   placeholder="Observação (opcional)"
                   value={current?.observation || ''}
                   onChange={e => handleUpdate(key, 'observation', e.target.value)}
-                  className="p-2.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none"
+                  className="p-2.5 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
