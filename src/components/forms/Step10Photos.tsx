@@ -62,13 +62,13 @@ export function Step10Photos({ data, onChange }: Props) {
             PNG, JPG ou WEBP (múltiplos arquivos permitidos)
           </p>
         </div>
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          onChange={handleFileChange}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-        />
+  <input
+  type="file"
+  accept="image/*,camera"
+  multiple
+  onChange={handleFileChange}
+  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+/>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
