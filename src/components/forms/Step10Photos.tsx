@@ -52,24 +52,24 @@ export function Step10Photos({ data, onChange }: Props) {
         <Camera className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Tópico 10 - Registros Fotográficos
       </h2>
 
-      <div className="p-6 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex flex-col items-center justify-center space-y-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative">
-        <Upload className="w-8 h-8 text-slate-400" />
-        <div className="text-center">
-          <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-            Clique ou arraste imagens aqui
-          </span>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            PNG, JPG ou WEBP (múltiplos arquivos permitidos)
-          </p>
-        </div>
+ <div className="p-6 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex flex-col items-center justify-center space-y-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative">
+  <Upload className="w-8 h-8 text-slate-400" />
+  <div className="text-center">
+    <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+      Clique ou arraste imagens aqui
+    </span>
+    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+      PNG, JPG ou WEBP (múltiplos arquivos permitidos)
+    </p>
+  </div>
   <input
-  type="file"
-  accept="image/*,camera"
-  multiple
-  onChange={handleFileChange}
-  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-/>
-      </div>
+    type="file"
+    accept="image/*,camera"
+    multiple
+    onChange={handleFileChange}
+    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+  />
+</div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
         {photos.length === 0 ? (
