@@ -229,18 +229,6 @@ export async function buildPdfReport(
         drawEmptyMessage();
       }
 
-      // --- OBSERVAÇÕES GERAIS ---
-      drawSectionHeader('Observações Gerais do Fiscal');
-      if (data.observacoesGerais || data.observacoes) {
-        doc
-          .font(FONT_FAMILY_REGULAR)
-          .fontSize(8.5)
-          .fillColor(COLOR_TEXT_DARK)
-          .text(data.observacoesGerais || data.observacoes || '', { align: 'justify' });
-      } else {
-        drawEmptyMessage();
-      }
-
       // --- TÓPICO 10: FOTOS ---
       drawSectionHeader('10. Registro Fotográfico');
       const rawFotos = data?.topico10_fotos || [];
@@ -268,9 +256,7 @@ export async function buildPdfReport(
                 .font(FONT_FAMILY_BOLD)
                 .fontSize(8.5)
                 .fillColor(COLOR_TEXT_DARK)
-                .text(`Foto ${index + 1}: `, startX, doc.y, { continued: true, align: 'center' })
-                .font(FONT_FAMILY_REGULAR)
-                .text(caption.trim(), { align: 'center' });
+                .text(`Foto ${index + 1}: ${caption.trim()}`, { align: 'center' });
             }
 
             doc.moveDown(1.2);
