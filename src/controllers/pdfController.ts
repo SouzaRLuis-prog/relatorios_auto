@@ -11,7 +11,7 @@ export async function buildPdfReport(
       const doc = new PDFDocument({
         size: 'A4',
         margin: 40,
-        bufferPages: true,
+        bufferPages: true, // Habilita o buffer para contagem total de páginas
       });
 
       const buffers: Buffer[] = [];
@@ -243,7 +243,8 @@ export async function buildPdfReport(
           if (!imgUrl || typeof imgUrl !== 'string') return;
 
           try {
-            if (doc.y > 550) doc.addPage();
+            // Ajustado para 500 para garantir que a foto + legenda não estoure a página
+            if (doc.y > 500) doc.addPage();
 
             const cleanBase64 = imgUrl.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
             const imgBuffer = Buffer.from(cleanBase64, 'base64');
@@ -270,8 +271,8 @@ export async function buildPdfReport(
       }
 
       // --- TÓPICO 11: AVALIAÇÃO / NOTAS (AI) ---
+      drawSectionHeader('11. Avaliação e Pontuação Geral');
       if (aiResults?.topico11_notas) {
-        drawSectionHeader('11. Avaliação e Pontuação Geral');
         const notas = aiResults.topico11_notas;
         doc
           .font(FONT_FAMILY_REGULAR)
@@ -290,16 +291,36 @@ export async function buildPdfReport(
           .font(FONT_FAMILY_BOLD)
           .fontSize(9.5)
           .text(`Média Final da Unidade: ${notas.mediaFinal} / 5`);
+      } else {
+        drawEmptyMessage('Aguardando avaliação.');
       }
 
       // --- TÓPICO 12: CONCLUSÃO / SÍNTESE ---
+      drawSectionHeader('12. Conclusão e Parecer Técnico');
       if (aiResults?.topico12_conclusao) {
-        drawSectionHeader('12. Conclusão e Parecer Técnico');
         doc
           .font(FONT_FAMILY_REGULAR)
           .fontSize(9)
           .fillColor(COLOR_TEXT_DARK)
           .text(aiResults.topico12_conclusao, { align: 'justify' });
+      } else {
+        drawEmptyMessage('Aguardando conclusão.');
+      }
+
+      // --- RODAPÉ COM PAGINAÇÃO AUTOMÁTICA ---
+      const range = doc.bufferedPageRange();
+      for (let i = range.start; i < range.start + range.count; i++) {
+        doc.switchToPage(i);
+        doc
+          .font(FONT_FAMILY_REGULAR)
+          .fontSize(8)
+          .fillColor(COLOR_TEXT_MUTED)
+          .text(
+            `Página ${i + 1} de ${range.count}`,
+            startX,
+            doc.page.height - 25,
+            { align: 'center', width: doc.page.width - doc.page.margins.left - doc.page.margins.right }
+          );
       }
 
       doc.end();
