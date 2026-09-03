@@ -78,7 +78,7 @@ export async function buildPdfReport(
           .text(`${statusStr}${obsStr}`);
       };
 
-      // --- CABEÇALHO DO RELATÓRIO COM LOGOMARCA ---
+      // --- CABEÇALHO DO RELATÓRIO COM LOGOMARCA CENTRALIZADA E PROPORCIONAL ---
       const absoluteLogoPath = 'C:\\Users\\LuisR\\Desktop\\Projetos\\relatorio\\gerador-relatorios\\public\\Logo Governo - Desenvolvimento S. -5.png';
       const relativeLogoPath = path.join(process.cwd(), 'public', 'Logo Governo - Desenvolvimento S. -5.png');
 
@@ -90,8 +90,18 @@ export async function buildPdfReport(
 
       if (logoToUse) {
         try {
-          doc.image(logoToUse, { fit: [220, 60], align: 'center' });
-          doc.moveDown(0.5);
+          const logoMaxWidth = 180; // Largura proporcional ideal para cabeçalho A4
+          const logoMaxHeight = 60;  // Altura máxima limite
+          const logoX = (doc.page.width - logoMaxWidth) / 2; // Centraliza perfeitamente na folha
+
+          doc.image(logoToUse, logoX, doc.y, {
+            fit: [logoMaxWidth, logoMaxHeight],
+            align: 'center',
+            valign: 'center',
+          });
+
+          // Avança a posição Y considerando a altura da logo + espaçamento
+          doc.y += logoMaxHeight + 10;
         } catch (e) {
           console.error('Erro ao inserir logomarca no PDF:', e);
         }
@@ -99,7 +109,7 @@ export async function buildPdfReport(
 
       doc
         .font(FONT_FAMILY_BOLD)
-        .fontSize(16)
+        .fontSize(15)
         .fillColor(COLOR_TEXT_DARK)
         .text('RELATÓRIO DE VISITA TÉCNICA', { align: 'center' });
       doc.moveDown(1);
