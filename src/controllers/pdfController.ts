@@ -42,6 +42,16 @@ export async function buildPdfReport(
         doc.moveDown(0.5);
       };
 
+      const drawEmptyMessage = (msg = 'Nada a reportar.') => {
+        if (doc.y > 750) doc.addPage();
+        doc
+          .font(FONT_FAMILY_REGULAR)
+          .fontSize(8.5)
+          .fillColor(COLOR_TEXT_MUTED)
+          .text(msg, startX, doc.y);
+        doc.moveDown(0.5);
+      };
+
       const drawField = (label: string, field?: { status: string; observation?: string } | string) => {
         if (!field) return;
         if (doc.y > 750) doc.addPage();
@@ -88,8 +98,8 @@ export async function buildPdfReport(
       doc.moveDown(0.5);
 
       // --- TÓPICO 1: ESTRUTURA FÍSICA ---
+      drawSectionHeader('1. Estrutura Física');
       if (data.topico1_estrutura) {
-        drawSectionHeader('1. Estrutura Física');
         const est = data.topico1_estrutura;
         drawField('Pintura', est.pintura);
         drawField('Telhado / Cobertura', est.telhado);
@@ -101,21 +111,25 @@ export async function buildPdfReport(
         drawField('Banheiros / Sanitários', est.banheiros);
         drawField('Copa / Cozinha', est.copaCozinha);
         drawField('Acessibilidade', est.acessibilidade);
+      } else {
+        drawEmptyMessage();
       }
 
       // --- TÓPICO 2: LIMPEZA E CONSERVAÇÃO ---
+      drawSectionHeader('2. Limpeza e Conservação');
       if (data.topico2_limpeza) {
-        drawSectionHeader('2. Limpeza e Conservação');
         const limp = data.topico2_limpeza;
         drawField('Limpeza Geral', limp.limpezaGeral);
         drawField('Conservação do Mobiliário', limp.conservacaoMobiliario);
         drawField('Recolhimento de Lixo', limp.recolhimentoLixo);
         drawField('Higienização dos Banheiros', limp.higienizacaoBanheiros);
+      } else {
+        drawEmptyMessage();
       }
 
       // --- TÓPICO 3: MATERIAIS ---
+      drawSectionHeader('3. Materiais e Consumíveis');
       if (data.topico3_materiais && data.topico3_materiais.length > 0) {
-        drawSectionHeader('3. Materiais e Consumíveis');
         data.topico3_materiais.forEach((item) => {
           if (doc.y > 750) doc.addPage();
           doc
@@ -125,11 +139,13 @@ export async function buildPdfReport(
             .font(FONT_FAMILY_REGULAR)
             .text(`${item.status}${item.observation ? ` - Obs: ${item.observation}` : ''}`);
         });
+      } else {
+        drawEmptyMessage();
       }
 
       // --- TÓPICO 4: EQUIPAMENTOS ---
+      drawSectionHeader('4. Equipamentos e Tecnologia');
       if (data.topico4_equipamentos && data.topico4_equipamentos.length > 0) {
-        drawSectionHeader('4. Equipamentos e Tecnologia');
         data.topico4_equipamentos.forEach((item) => {
           if (doc.y > 750) doc.addPage();
           doc
@@ -139,43 +155,51 @@ export async function buildPdfReport(
             .font(FONT_FAMILY_REGULAR)
             .text(`${item.status}${item.observation ? ` - Obs: ${item.observation}` : ''}`);
         });
+      } else {
+        drawEmptyMessage();
       }
 
       // --- TÓPICO 5: RECURSOS HUMANOS ---
+      drawSectionHeader('5. Recursos Humanos');
       if (data.topico5_rh) {
-        drawSectionHeader('5. Recursos Humanos');
         const rh = data.topico5_rh;
         drawField('Conselheiros Presentes', rh.conselheirosPresentes);
         drawField('Equipe Administrativa Completa', rh.equipeAdministrativaCompleta);
         drawField('Cumprimento de Horário', rh.cumprimentoHorario);
         drawField('Escalas Afixadas', rh.escalasAfixadas);
         drawField('Necessidade de Substituição', rh.necessidadeSubstituicao);
+      } else {
+        drawEmptyMessage();
       }
 
       // --- TÓPICO 6: ATENDIMENTO AO PÚBLICO ---
+      drawSectionHeader('6. Atendimento ao Público');
       if (data.topico6_atendimento) {
-        drawSectionHeader('6. Atendimento ao Público');
         const at = data.topico6_atendimento;
         drawField('Atendimento Regular', at.atendimentoRegular);
         drawField('Sala Reservada', at.salaReservada);
         drawField('Organização do Atendimento', at.organizacaoAtendimento);
         drawField('Fluxo de Usuários', at.fluxoUsuario);
+      } else {
+        drawEmptyMessage();
       }
 
       // --- TÓPICO 7: SEGURANÇA ---
+      drawSectionHeader('7. Segurança');
       if (data.topico7_seguranca) {
-        drawSectionHeader('7. Segurança');
         const seg = data.topico7_seguranca;
         drawField('Extintores de Incêndio', seg.extintores);
         drawField('Fechaduras e Trancas', seg.fechadura);
         drawField('Portões de Acesso', seg.portoes);
         drawField('Iluminação Externa', seg.iluminacaoExterna);
         drawField('Câmeras / Monitoramento', seg.camera);
+      } else {
+        drawEmptyMessage();
       }
 
       // --- TÓPICO 8: DEMANDAS IDENTIFICADAS ---
+      drawSectionHeader('8. Demandas Identificadas');
       if (data.topico8_demandas && data.topico8_demandas.length > 0) {
-        drawSectionHeader('8. Demandas Identificadas');
         data.topico8_demandas.forEach((item, index) => {
           if (doc.y > 740) doc.addPage();
           doc
@@ -185,11 +209,13 @@ export async function buildPdfReport(
             .font(FONT_FAMILY_REGULAR)
             .text(`${item.demanda} | Prioridade: ${item.prioridade} | Setor: ${item.setorResponsavel} | Situação: ${item.situacao}`);
         });
+      } else {
+        drawEmptyMessage();
       }
 
       // --- TÓPICO 9: PROVIDÊNCIAS TOMADAS ---
+      drawSectionHeader('9. Providências Tomadas');
       if (data.topico9_providencias && data.topico9_providencias.length > 0) {
-        drawSectionHeader('9. Providências Tomadas');
         data.topico9_providencias.forEach((item, index) => {
           if (doc.y > 740) doc.addPage();
           doc
@@ -199,16 +225,20 @@ export async function buildPdfReport(
             .font(FONT_FAMILY_REGULAR)
             .text(`${item.providencia} | Data: ${item.data} | Situação: ${item.situacao}`);
         });
+      } else {
+        drawEmptyMessage();
       }
 
       // --- OBSERVAÇÕES GERAIS ---
+      drawSectionHeader('Observações Gerais do Fiscal');
       if (data.observacoesGerais || data.observacoes) {
-        drawSectionHeader('Observações Gerais do Fiscal');
         doc
           .font(FONT_FAMILY_REGULAR)
           .fontSize(8.5)
           .fillColor(COLOR_TEXT_DARK)
           .text(data.observacoesGerais || data.observacoes || '', { align: 'justify' });
+      } else {
+        drawEmptyMessage();
       }
 
       // --- TÓPICO 10: FOTOS ---
@@ -216,12 +246,7 @@ export async function buildPdfReport(
       const rawFotos = data?.topico10_fotos || [];
 
       if (rawFotos.length === 0) {
-        doc
-          .font(FONT_FAMILY_REGULAR)
-          .fontSize(8.5)
-          .fillColor(COLOR_TEXT_MUTED)
-          .text('Nenhum registro fotográfico anexado.', startX, doc.y);
-        doc.moveDown(1);
+        drawEmptyMessage();
       } else {
         rawFotos.forEach((item: any, index: number) => {
           const imgUrl = typeof item === 'string' ? item : item?.url;
