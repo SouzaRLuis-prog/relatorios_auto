@@ -2,7 +2,6 @@ import PDFDocument from 'pdfkit';
 import { ReportData } from '@/models/report';
 import { AIAnalysisResult } from '@/controllers/geminiController';
 
-// Exportação obrigatória para ser reconhecida pelo route.ts
 export async function buildPdfReport(
   data: ReportData,
   aiResults: AIAnalysisResult
@@ -25,9 +24,9 @@ export async function buildPdfReport(
       const FONT_FAMILY_BOLD = 'Helvetica-Bold';
       const COLOR_TEXT_DARK = '#1E293B';
       const COLOR_TEXT_MUTED = '#64748B';
-      const PHOTO_BREAK_PAGE_Y = 650;
 
       const drawSectionHeader = (title: string) => {
+        if (doc.y > 720) doc.addPage();
         doc.moveDown(0.8);
         doc
           .font(FONT_FAMILY_BOLD)
@@ -43,7 +42,31 @@ export async function buildPdfReport(
         doc.moveDown(0.5);
       };
 
-      // --- CABEÇALHO E CONTEÚDO DO RELATÓRIO ---
+      const drawField = (label: string, field?: { status: string; observation?: string } | string) => {
+        if (!field) return;
+        if (doc.y > 750) doc.addPage();
+
+        let statusStr = '';
+        let obsStr = '';
+
+        if (typeof field === 'string') {
+          statusStr = field;
+        } else {
+          statusStr = field.status || '-';
+          obsStr = field.observation ? ` (${field.observation})` : '';
+        }
+
+        doc
+          .font(FONT_FAMILY_BOLD)
+          .fontSize(8.5)
+          .fillColor(COLOR_TEXT_DARK)
+          .text(`${label}: `, startX, doc.y, { continued: true })
+          .font(FONT_FAMILY_REGULAR)
+          .fillColor(COLOR_TEXT_DARK)
+          .text(`${statusStr}${obsStr}`);
+      };
+
+      // --- CABEÇALHO DO RELATÓRIO ---
       doc
         .font(FONT_FAMILY_BOLD)
         .fontSize(16)
@@ -51,13 +74,142 @@ export async function buildPdfReport(
         .text('RELATÓRIO DE VISITA TÉCNICA', { align: 'center' });
       doc.moveDown(1);
 
-      // Exemplo de impressão dos dados da visita
+      // --- DADOS GERAIS ---
       doc
         .font(FONT_FAMILY_REGULAR)
         .fontSize(9)
+        .fillColor(COLOR_TEXT_DARK)
         .text(`Unidade: ${data.unidade || '-'}`)
         .text(`Data da Visita: ${data.dataVisita || '-'}`)
-        .text(`Responsável: ${data.responsavelVisita || '-'}`);
+        .text(`Responsável pela Visita: ${data.responsavelVisita || '-'}`);
+
+      if (data.periodo) doc.text(`Período: ${data.periodo}`);
+      if (data.mesAno) doc.text(`Mês/Ano: ${data.mesAno}`);
+      doc.moveDown(0.5);
+
+      // --- TÓPICO 1: ESTRUTURA FÍSICA ---
+      if (data.topico1_estrutura) {
+        drawSectionHeader('1. Estrutura Física');
+        const est = data.topico1_estrutura;
+        drawField('Pintura', est.pintura);
+        drawField('Telhado / Cobertura', est.telhado);
+        drawField('Piso / Revestimento', est.piso);
+        drawField('Portas e Janelas', est.portasJanelas);
+        drawField('Iluminação Interna', est.iluminacao);
+        drawField('Instalações Elétricas', est.instalacoesEletricas);
+        drawField('Instalações Hidráulicas', est.instalacoesHidraulicas);
+        drawField('Banheiros / Sanitários', est.banheiros);
+        drawField('Copa / Cozinha', est.copaCozinha);
+        drawField('Acessibilidade', est.acessibilidade);
+      }
+
+      // --- TÓPICO 2: LIMPEZA E CONSERVAÇÃO ---
+      if (data.topico2_limpeza) {
+        drawSectionHeader('2. Limpeza e Conservação');
+        const limp = data.topico2_limpeza;
+        drawField('Limpeza Geral', limp.limpezaGeral);
+        drawField('Conservação do Mobiliário', limp.conservacaoMobiliario);
+        drawField('Recolhimento de Lixo', limp.recolhimentoLixo);
+        drawField('Higienização dos Banheiros', limp.higienizacaoBanheiros);
+      }
+
+      // --- TÓPICO 3: MATERIAIS ---
+      if (data.topico3_materiais && data.topico3_materiais.length > 0) {
+        drawSectionHeader('3. Materiais e Consumíveis');
+        data.topico3_materiais.forEach((item) => {
+          if (doc.y > 750) doc.addPage();
+          doc
+            .font(FONT_FAMILY_BOLD)
+            .fontSize(8.5)
+            .text(`• ${item.name}: `, startX, doc.y, { continued: true })
+            .font(FONT_FAMILY_REGULAR)
+            .text(`${item.status}${item.observation ? ` - Obs: ${item.observation}` : ''}`);
+        });
+      }
+
+      // --- TÓPICO 4: EQUIPAMENTOS ---
+      if (data.topico4_equipamentos && data.topico4_equipamentos.length > 0) {
+        drawSectionHeader('4. Equipamentos e Tecnologia');
+        data.topico4_equipamentos.forEach((item) => {
+          if (doc.y > 750) doc.addPage();
+          doc
+            .font(FONT_FAMILY_BOLD)
+            .fontSize(8.5)
+            .text(`• ${item.name}: `, startX, doc.y, { continued: true })
+            .font(FONT_FAMILY_REGULAR)
+            .text(`${item.status}${item.observation ? ` - Obs: ${item.observation}` : ''}`);
+        });
+      }
+
+      // --- TÓPICO 5: RECURSOS HUMANOS ---
+      if (data.topico5_rh) {
+        drawSectionHeader('5. Recursos Humanos');
+        const rh = data.topico5_rh;
+        drawField('Conselheiros Presentes', rh.conselheirosPresentes);
+        drawField('Equipe Administrativa Completa', rh.equipeAdministrativaCompleta);
+        drawField('Cumprimento de Horário', rh.cumprimentoHorario);
+        drawField('Escalas Afixadas', rh.escalasAfixadas);
+        drawField('Necessidade de Substituição', rh.necessidadeSubstituicao);
+      }
+
+      // --- TÓPICO 6: ATENDIMENTO AO PÚBLICO ---
+      if (data.topico6_atendimento) {
+        drawSectionHeader('6. Atendimento ao Público');
+        const at = data.topico6_atendimento;
+        drawField('Atendimento Regular', at.atendimentoRegular);
+        drawField('Sala Reservada', at.salaReservada);
+        drawField('Organização do Atendimento', at.organizacaoAtendimento);
+        drawField('Fluxo de Usuários', at.fluxoUsuario);
+      }
+
+      // --- TÓPICO 7: SEGURANÇA ---
+      if (data.topico7_seguranca) {
+        drawSectionHeader('7. Segurança');
+        const seg = data.topico7_seguranca;
+        drawField('Extintores de Incêndio', seg.extintores);
+        drawField('Fechaduras e Trancas', seg.fechadura);
+        drawField('Portões de Acesso', seg.portoes);
+        drawField('Iluminação Externa', seg.iluminacaoExterna);
+        drawField('Câmeras / Monitoramento', seg.camera);
+      }
+
+      // --- TÓPICO 8: DEMANDAS IDENTIFICADAS ---
+      if (data.topico8_demandas && data.topico8_demandas.length > 0) {
+        drawSectionHeader('8. Demandas Identificadas');
+        data.topico8_demandas.forEach((item, index) => {
+          if (doc.y > 740) doc.addPage();
+          doc
+            .font(FONT_FAMILY_BOLD)
+            .fontSize(8.5)
+            .text(`${index + 1}. Demanda: `, startX, doc.y, { continued: true })
+            .font(FONT_FAMILY_REGULAR)
+            .text(`${item.demanda} | Prioridade: ${item.prioridade} | Setor: ${item.setorResponsavel} | Situação: ${item.situacao}`);
+        });
+      }
+
+      // --- TÓPICO 9: PROVIDÊNCIAS TOMADAS ---
+      if (data.topico9_providencias && data.topico9_providencias.length > 0) {
+        drawSectionHeader('9. Providências Tomadas');
+        data.topico9_providencias.forEach((item, index) => {
+          if (doc.y > 740) doc.addPage();
+          doc
+            .font(FONT_FAMILY_BOLD)
+            .fontSize(8.5)
+            .text(`${index + 1}. Providência: `, startX, doc.y, { continued: true })
+            .font(FONT_FAMILY_REGULAR)
+            .text(`${item.providencia} | Data: ${item.data} | Situação: ${item.situacao}`);
+        });
+      }
+
+      // --- OBSERVAÇÕES GERAIS ---
+      if (data.observacoesGerais || data.observacoes) {
+        drawSectionHeader('Observações Gerais do Fiscal');
+        doc
+          .font(FONT_FAMILY_REGULAR)
+          .fontSize(8.5)
+          .fillColor(COLOR_TEXT_DARK)
+          .text(data.observacoesGerais || data.observacoes || '', { align: 'justify' });
+      }
 
       // --- TÓPICO 10: FOTOS ---
       drawSectionHeader('10. Registro Fotográfico');
@@ -78,9 +230,9 @@ export async function buildPdfReport(
           if (!imgUrl || typeof imgUrl !== 'string') return;
 
           try {
-            if (doc.y > PHOTO_BREAK_PAGE_Y) doc.addPage();
+            if (doc.y > 550) doc.addPage();
 
-            const cleanBase64 = imgUrl.replace(/^data:image\/(png|jpeg|jpg);base64,/, '');
+            const cleanBase64 = imgUrl.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
             const imgBuffer = Buffer.from(cleanBase64, 'base64');
 
             doc.image(imgBuffer, { fit: [420, 240], align: 'center' });
@@ -106,6 +258,29 @@ export async function buildPdfReport(
         });
       }
 
+      // --- TÓPICO 11: AVALIAÇÃO / NOTAS (AI) ---
+      if (aiResults?.topico11_notas) {
+        drawSectionHeader('11. Avaliação e Pontuação Geral');
+        const notas = aiResults.topico11_notas;
+        doc
+          .font(FONT_FAMILY_REGULAR)
+          .fontSize(8.5)
+          .fillColor(COLOR_TEXT_DARK)
+          .text(`• Estrutura Física: ${notas.estrutura} / 5`)
+          .text(`• Limpeza e Conservação: ${notas.limpeza} / 5`)
+          .text(`• Materiais: ${notas.materiais} / 5`)
+          .text(`• Equipamentos: ${notas.equipamentos} / 5`)
+          .text(`• Recursos Humanos: ${notas.rh} / 5`)
+          .text(`• Atendimento: ${notas.atendimento} / 5`)
+          .text(`• Segurança: ${notas.seguranca} / 5`);
+
+        doc.moveDown(0.5);
+        doc
+          .font(FONT_FAMILY_BOLD)
+          .fontSize(9.5)
+          .text(`Média Final da Unidade: ${notas.mediaFinal} / 5`);
+      }
+
       // --- TÓPICO 12: CONCLUSÃO / SÍNTESE ---
       if (aiResults?.topico12_conclusao) {
         drawSectionHeader('12. Conclusão e Parecer Técnico');
@@ -116,7 +291,6 @@ export async function buildPdfReport(
           .text(aiResults.topico12_conclusao, { align: 'justify' });
       }
 
-      // Finaliza o documento PDF
       doc.end();
     } catch (err) {
       reject(err);
