@@ -39,6 +39,12 @@ export interface ActionItem {
   situacao: string;
 }
 
+export interface PhotoItem {
+  id?: string;
+  url: string;
+  caption?: string;
+}
+
 export interface ReportData {
   // Dados Gerais
   periodo?: string;
@@ -109,6 +115,6 @@ export interface ReportData {
   // Tópico 9 - Providências Tomadas
   topico9_providencias?: ActionItem[];
 
-  // Tópico 10 - Fotos
-  topico10_fotos?: string[];
+  // Tópico 10 - Fotos (Aceita formato antigo string Base64 e novo objeto PhotoItem com legenda)
+  topico10_fotos?: (string | PhotoItem)[];
 }

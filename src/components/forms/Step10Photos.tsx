@@ -1,18 +1,12 @@
 'use client';
 
 import React from 'react';
-import { ReportData } from '@/models/report';
+import { ReportData, PhotoItem } from '@/models/report';
 import { Camera, Upload, Trash2 } from 'lucide-react';
 
 interface Props {
   data: ReportData;
   onChange: (data: Partial<ReportData>) => void;
-}
-
-export interface PhotoItem {
-  id: string;
-  url: string;
-  caption: string;
 }
 
 function compressImage(file: File, maxWidth = 1200, maxHeight = 1200, quality = 0.75): Promise<string> {
@@ -58,7 +52,7 @@ function compressImage(file: File, maxWidth = 1200, maxHeight = 1200, quality = 
 }
 
 export function Step10Photos({ data, onChange }: Props) {
-  // Garante compatibilidade caso haja strings antigas salvas
+  // Garante compatibilidade caso haja strings antigas salvas em relatórios anteriores
   const rawPhotos = data?.topico10_fotos || [];
   const photos: PhotoItem[] = rawPhotos.map((item: any) => {
     if (typeof item === 'string') {
@@ -93,14 +87,16 @@ export function Step10Photos({ data, onChange }: Props) {
     }
   };
 
-  const handleCaptionChange = (id: string, caption: string) => {
+  const handleCaptionChange = (id?: string, caption?: string) => {
+    if (!id) return;
     const updated = photos.map((item) =>
-      item.id === id ? { ...item, caption } : item
+      item.id === id ? { ...item, caption: caption || '' } : item
     );
     onChange({ topico10_fotos: updated });
   };
 
-  const handleRemove = (id: string) => {
+  const handleRemove = (id?: string) => {
+    if (!id) return;
     const updated = photos.filter((item) => item.id !== id);
     onChange({ topico10_fotos: updated });
   };
@@ -158,7 +154,7 @@ export function Step10Photos({ data, onChange }: Props) {
         ) : (
           photos.map((item, index) => (
             <div
-              key={item.id}
+              key={item.id || index}
               className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 space-y-3 relative group"
             >
               <div className="relative aspect-video rounded-lg overflow-hidden bg-slate-900">
@@ -183,7 +179,7 @@ export function Step10Photos({ data, onChange }: Props) {
                 </label>
                 <input
                   type="text"
-                  value={item.caption}
+                  value={item.caption || ''}
                   onChange={(e) => handleCaptionChange(item.id, e.target.value)}
                   placeholder="Ex: Infiltração identificada na sala de atendimento..."
                   className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
