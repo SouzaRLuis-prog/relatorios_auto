@@ -1,4 +1,6 @@
 import PDFDocument from 'pdfkit';
+import fs from 'fs';
+import path from 'path';
 import { ReportData } from '@/models/report';
 import { AIAnalysisResult } from '@/controllers/geminiController';
 
@@ -11,7 +13,7 @@ export async function buildPdfReport(
       const doc = new PDFDocument({
         size: 'A4',
         margin: 40,
-        bufferPages: true, // Habilita o buffer para contagem total de páginas
+        bufferPages: true,
       });
 
       const buffers: Buffer[] = [];
@@ -76,7 +78,25 @@ export async function buildPdfReport(
           .text(`${statusStr}${obsStr}`);
       };
 
-      // --- CABEÇALHO DO RELATÓRIO ---
+      // --- CABEÇALHO DO RELATÓRIO COM LOGOMARCA ---
+      const absoluteLogoPath = 'C:\\Users\\LuisR\\Desktop\\Projetos\\relatorio\\gerador-relatorios\\public\\Logo Governo - Desenvolvimento S. -5.png';
+      const relativeLogoPath = path.join(process.cwd(), 'public', 'Logo Governo - Desenvolvimento S. -5.png');
+
+      const logoToUse = fs.existsSync(absoluteLogoPath)
+        ? absoluteLogoPath
+        : fs.existsSync(relativeLogoPath)
+        ? relativeLogoPath
+        : null;
+
+      if (logoToUse) {
+        try {
+          doc.image(logoToUse, { fit: [220, 60], align: 'center' });
+          doc.moveDown(0.5);
+        } catch (e) {
+          console.error('Erro ao inserir logomarca no PDF:', e);
+        }
+      }
+
       doc
         .font(FONT_FAMILY_BOLD)
         .fontSize(16)
@@ -243,7 +263,6 @@ export async function buildPdfReport(
           if (!imgUrl || typeof imgUrl !== 'string') return;
 
           try {
-            // Ajustado para 500 para garantir que a foto + legenda não estoure a página
             if (doc.y > 500) doc.addPage();
 
             const cleanBase64 = imgUrl.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
@@ -305,22 +324,6 @@ export async function buildPdfReport(
           .text(aiResults.topico12_conclusao, { align: 'justify' });
       } else {
         drawEmptyMessage('Aguardando conclusão.');
-      }
-
-      // --- RODAPÉ COM PAGINAÇÃO AUTOMÁTICA ---
-      const range = doc.bufferedPageRange();
-      for (let i = range.start; i < range.start + range.count; i++) {
-        doc.switchToPage(i);
-        doc
-          .font(FONT_FAMILY_REGULAR)
-          .fontSize(8)
-          .fillColor(COLOR_TEXT_MUTED)
-          .text(
-            `Página ${i + 1} de ${range.count}`,
-            startX,
-            doc.page.height - 25,
-            { align: 'center', width: doc.page.width - doc.page.margins.left - doc.page.margins.right }
-          );
       }
 
       doc.end();
