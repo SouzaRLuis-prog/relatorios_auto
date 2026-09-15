@@ -31,10 +31,10 @@ export async function buildPdfReport(
       const COLOR_PRIMARY_BLUE = '#383E96'; // Azul escuro Governo / Secretaria
       const COLOR_PRIMARY_TEAL = '#35A7B4'; // Verde Água / Teal de Montes Claros
       const COLOR_ACCENT_GOLD  = '#F7C924'; // Amarelo/Ouro do Sol
-      const COLOR_TEXT_DARK   = '#1E293B'; // Texto escuro principal
-      const COLOR_TEXT_MUTED  = '#64748B'; // Texto secundário
-      const COLOR_BG_LIGHT    = '#F8FAFC'; // Fundo suave para linhas zebradas
-      const COLOR_BORDER      = '#E2E8F0'; // Borda discreta de tabela
+      const COLOR_TEXT_DARK    = '#1E293B'; // Texto escuro principal
+      const COLOR_TEXT_MUTED   = '#64748B'; // Texto secundário
+      const COLOR_BG_LIGHT     = '#F8FAFC'; // Fundo suave para linhas zebradas
+      const COLOR_BORDER       = '#E2E8F0'; // Borda discreta de tabela
 
       // --- FUNÇÃO DE VERIFICAÇÃO DE PÁGINA ---
       const checkPageBreak = (neededHeight: number) => {
@@ -113,9 +113,9 @@ export async function buildPdfReport(
           // Calcula a altura necessária da linha baseada no texto mais longo
           let maxRowHeight = 18;
           row.forEach((cell, i) => {
+            doc.fontSize(8);
             const cellHeight = doc.heightOfString(cell || '-', {
               width: colWidths[i] - 12,
-              fontSize: 8,
             }) + 8;
             if (cellHeight > maxRowHeight) maxRowHeight = cellHeight;
           });
@@ -168,33 +168,33 @@ export async function buildPdfReport(
       };
 
       // --- 1. CABEÇALHO COM LOGOMARCA CENTRALIZADA ---
- const absoluteLogoPath = 'C:\\Users\\LuisR\\Desktop\\Projetos\\relatorio\\gerador-relatorios\\public\\Logo Governo - Desenvolvimento S. -5.png';
- const relativeLogoPath = path.join(process.cwd(), 'public', 'Logo Governo - Desenvolvimento S. -5.png');
+      const absoluteLogoPath = 'C:\\Users\\LuisR\\Desktop\\Projetos\\relatorio\\gerador-relatorios\\public\\Logo Governo - Desenvolvimento S. -5.png';
+      const relativeLogoPath = path.join(process.cwd(), 'public', 'Logo Governo - Desenvolvimento S. -5.png');
 
- const logoToUse = fs.existsSync(absoluteLogoPath)
-   ? absoluteLogoPath
-   : fs.existsSync(relativeLogoPath)
-   ? relativeLogoPath
-   : null;
+      const logoToUse = fs.existsSync(absoluteLogoPath)
+        ? absoluteLogoPath
+        : fs.existsSync(relativeLogoPath)
+        ? relativeLogoPath
+        : null;
 
- if (logoToUse) {
-   try {
-     const logoWidth = contentWidth; // 515.28px (exatamente a mesma largura das tabelas)
-     const logoMaxHeight = 70;       // Altura limite para manter a proporção sem poluir a folha
+      if (logoToUse) {
+        try {
+          const logoWidth = contentWidth; // 515.28px (exatamente a mesma largura das tabelas)
+          const logoMaxHeight = 70;       // Altura limite para manter a proporção sem poluir a folha
 
-     // Desenha a imagem ocupando a largura total das tabelas a partir do margin esquerdo (startX)
-     doc.image(logoToUse, startX, doc.y, {
-       fit: [logoWidth, logoMaxHeight],
-       align: 'center',
-       valign: 'center',
-     });
+          // Desenha a imagem ocupando a largura total das tabelas a partir do margin esquerdo (startX)
+          doc.image(logoToUse, startX, doc.y, {
+            fit: [logoWidth, logoMaxHeight],
+            align: 'center',
+            valign: 'center',
+          });
 
-     // Avança a posição Y considerando a altura limite + espaçamento
-     doc.y += logoMaxHeight + 12;
-   } catch (e) {
-     console.error('Erro ao inserir logomarca no PDF:', e);
-   }
- }
+          // Avança a posição Y considerando a altura limite + espaçamento
+          doc.y += logoMaxHeight + 12;
+        } catch (e) {
+          console.error('Erro ao inserir logomarca no PDF:', e);
+        }
+      }
 
       // TÍTULO PRINCIPAL
       doc
@@ -346,90 +346,90 @@ export async function buildPdfReport(
       ]);
       drawTable(['Providência / Ação Adotada', 'Data', 'Situação / Status'], rows9, [260, 105, 150]);
 
-// --- TÓPICO 10: REGISTRO FOTOGRÁFICO ---
-drawSectionHeader('10. Registro Fotográfico');
-const rawFotos = data?.topico10_fotos || [];
+      // --- TÓPICO 10: REGISTRO FOTOGRÁFICO ---
+      drawSectionHeader('10. Registro Fotográfico');
+      const rawFotos = data?.topico10_fotos || [];
 
-// Filtra fotos válidas para manter o índice da grade correto
-const validFotos = rawFotos.filter((item: any) => {
-  const url = typeof item === 'string' ? item : item?.url;
-  return url && typeof url === 'string';
-});
-
-if (validFotos.length === 0) {
-  drawTable([], [], colWidths3);
-} else {
-  // Dimensões do Grid (2 Fotos por Linha)
-  const cardWidth = 250;      // Largura de cada foto (250px * 2 + 15px gap = 515px)
-  const cardHeight = 160;     // Altura do card com foto e legenda
-  const gap = 15;             // Distância horizontal entre as duas fotos
-  const rowSpacing = 12;      // Distância vertical entre as linhas de fotos
-  let rowStartY = doc.y;
-
-  validFotos.forEach((item: any, index: number) => {
-    const imgUrl = typeof item === 'string' ? item : item?.url;
-    const caption = typeof item === 'string' ? '' : item?.caption;
-
-    const col = index % 2; // 0 = Coluna da Esquerda | 1 = Coluna da Direita
-
-    // Se for a primeira foto da linha, verifica se a linha inteira cabe na página
-    if (col === 0) {
-      checkPageBreak(cardHeight + rowSpacing);
-      rowStartY = doc.y;
-    }
-
-    // Calcula a posição X exata da foto atual
-    const cardX = startX + col * (cardWidth + gap);
-
-    try {
-      const cleanBase64 = imgUrl.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
-      const imgBuffer = Buffer.from(cleanBase64, 'base64');
-
-      // Moldura da Foto
-      doc
-        .rect(cardX, rowStartY, cardWidth, cardHeight)
-        .fillAndStroke('#FFFFFF', COLOR_BORDER);
-
-      // Imagem proporcional e centralizada
-      doc.image(imgBuffer, cardX + 5, rowStartY + 5, {
-        fit: [cardWidth - 10, 120],
-        align: 'center',
-        valign: 'center',
+      // Filtra fotos válidas para manter o índice da grade correto
+      const validFotos = rawFotos.filter((item: any) => {
+        const url = typeof item === 'string' ? item : item?.url;
+        return url && typeof url === 'string';
       });
 
-      // Legenda abaixo da foto
-      if (caption && caption.trim().length > 0) {
-        doc
-          .font(FONT_BOLD)
-          .fontSize(7.5)
-          .fillColor(COLOR_PRIMARY_BLUE)
-          .text(`Foto ${index + 1}: ${caption.trim()}`, cardX + 5, rowStartY + 130, {
-            width: cardWidth - 10,
-            align: 'center',
-            height: 25,
-          });
-      }
-    } catch {
-      // Caso ocorra erro ao carregar o buffer da imagem
-      doc
-        .rect(cardX, rowStartY, cardWidth, cardHeight)
-        .fillAndStroke('#FFF5F5', '#FEB2B2');
-      doc
-        .font(FONT_REGULAR)
-        .fontSize(8)
-        .fillColor('#C00000')
-        .text('[Erro ao carregar imagem]', cardX + 5, rowStartY + 70, {
-          width: cardWidth - 10,
-          align: 'center',
-        });
-    }
+      if (validFotos.length === 0) {
+        drawTable([], [], colWidths3);
+      } else {
+        // Dimensões do Grid (2 Fotos por Linha)
+        const cardWidth = 250;      // Largura de cada foto (250px * 2 + 15px gap = 515px)
+        const cardHeight = 160;     // Altura do card com foto e legenda
+        const gap = 15;             // Distância horizontal entre as duas fotos
+        const rowSpacing = 12;      // Distância vertical entre as linhas de fotos
+        let rowStartY = doc.y;
 
-    // Quando preencher a 2ª coluna (ou for a última foto), avança a posição Y para a próxima linha
-    if (col === 1 || index === validFotos.length - 1) {
-      doc.y = rowStartY + cardHeight + rowSpacing;
-    }
-  });
-}
+        validFotos.forEach((item: any, index: number) => {
+          const imgUrl = typeof item === 'string' ? item : item?.url;
+          const caption = typeof item === 'string' ? '' : item?.caption;
+
+          const col = index % 2; // 0 = Coluna da Esquerda | 1 = Coluna da Direita
+
+          // Se for a primeira foto da linha, verifica se a linha inteira cabe na página
+          if (col === 0) {
+            checkPageBreak(cardHeight + rowSpacing);
+            rowStartY = doc.y;
+          }
+
+          // Calcula a posição X exata da foto atual
+          const cardX = startX + col * (cardWidth + gap);
+
+          try {
+            const cleanBase64 = imgUrl.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
+            const imgBuffer = Buffer.from(cleanBase64, 'base64');
+
+            // Moldura da Foto
+            doc
+              .rect(cardX, rowStartY, cardWidth, cardHeight)
+              .fillAndStroke('#FFFFFF', COLOR_BORDER);
+
+            // Imagem proporcional e centralizada
+            doc.image(imgBuffer, cardX + 5, rowStartY + 5, {
+              fit: [cardWidth - 10, 120],
+              align: 'center',
+              valign: 'center',
+            });
+
+            // Legenda abaixo da foto
+            if (caption && caption.trim().length > 0) {
+              doc
+                .font(FONT_BOLD)
+                .fontSize(7.5)
+                .fillColor(COLOR_PRIMARY_BLUE)
+                .text(`Foto ${index + 1}: ${caption.trim()}`, cardX + 5, rowStartY + 130, {
+                  width: cardWidth - 10,
+                  align: 'center',
+                  height: 25,
+                });
+            }
+          } catch {
+            // Caso ocorra erro ao carregar o buffer da imagem
+            doc
+              .rect(cardX, rowStartY, cardWidth, cardHeight)
+              .fillAndStroke('#FFF5F5', '#FEB2B2');
+            doc
+              .font(FONT_REGULAR)
+              .fontSize(8)
+              .fillColor('#C00000')
+              .text('[Erro ao carregar imagem]', cardX + 5, rowStartY + 70, {
+                width: cardWidth - 10,
+                align: 'center',
+              });
+          }
+
+          // Quando preencher a 2ª coluna (ou for a última foto), avança a posição Y para a próxima linha
+          if (col === 1 || index === validFotos.length - 1) {
+            doc.y = rowStartY + cardHeight + rowSpacing;
+          }
+        });
+      }
 
       // --- TÓPICO 11: AVALIAÇÃO / NOTAS (AI) ---
       drawSectionHeader('11. Avaliação e Pontuação Geral');
@@ -479,9 +479,9 @@ if (validFotos.length === 0) {
         const padding = 10;
         const textWidth = contentWidth - (padding * 2);
 
+        doc.fontSize(8.5);
         const textHeight = doc.heightOfString(textConclusao, {
           width: textWidth,
-          fontSize: 8.5,
         }) + (padding * 2);
 
         checkPageBreak(textHeight + 10);
