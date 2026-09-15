@@ -1,9 +1,6 @@
 import { Groq } from 'groq-sdk';
 import { ReportData } from '@/models/report';
 
-// Inicializa o cliente da Groq com a chave do ambiente[cite: 2]
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || '' });
-
 export interface AIAnalysisResult {
   topico11_notas: {
     estrutura: number;
@@ -20,32 +17,43 @@ export interface AIAnalysisResult {
 }
 
 export async function generateAIReportSection(data: ReportData): Promise<AIAnalysisResult> {
+  const apiKey = process.env.GROQ_API_KEY;
+
+  // Validação explícita da chave no momento da chamada da função
+  if (!apiKey || apiKey.trim() === '') {
+    console.error("❌ ERRO CRÍTICO: A variável de ambiente GROQ_API_KEY não foi encontrada ou está vazia no servidor!");
+    return getFallbackAIResult(data);
+  }
+
+  // Instancia o cliente Groq dinamicamente com a chave atualizada do ambiente
+  const groq = new Groq({ apiKey });
+
   try {
     const resumoDados = {
-      unidade: data?.unidade,
-      dataVisita: data?.dataVisita,
-      responsavelVisita: data?.responsavelVisita,
-      topico1_estrutura: data?.topico1_estrutura,
-      topico2_limpeza: data?.topico2_limpeza,
-      topico3_materiais: data?.topico3_materiais,
-      topico4_equipamentos: data?.topico4_equipamentos,
-      topico5_rh: data?.topico5_rh,
-      topico6_atendimento: data?.topico6_atendimento,
-      topico7_seguranca: data?.topico7_seguranca,
-      observacoesGerais: data?.observacoesGerais || data?.observacoes,
+      unidade: data?.unidade || 'Não informada',
+      dataVisita: data?.dataVisita || 'Não informada',
+      responsavelVisita: data?.responsavelVisita || 'Não informado',
+      topico1_estrutura: data?.topico1_estrutura || null,
+      topico2_limpeza: data?.topico2_limpeza || null,
+      topico3_materiais: data?.topico3_materiais || null,
+      topico4_equipamentos: data?.topico4_equipamentos || null,
+      topico5_rh: data?.topico5_rh || null,
+      topico6_atendimento: data?.topico6_atendimento || null,
+      topico7_seguranca: data?.topico7_seguranca || null,
+      observacoesGerais: data?.observacoesGerais || (data as any)?.observacoes || null,
     };
 
     const prompt = `
-Você é um auditor institucional sênior. Analise os dados resumidos da visita técnica abaixo:
+Você é um auditor institucional sênior. Analise os dados resumidos da visita técnica abaixo e retorne uma avaliação técnica estruturada em JSON:
 
 ${JSON.stringify(resumoDados, null, 2)}
 
-REGRAS DE RESPOSTA (Retorne APENAS um JSON válido, sem blocos de markdown ou crases):
-1. **topico11_notas**: Atribua uma nota de 1 a 5 (números inteiros ou decimais) para cada um dos 7 tópicos (estrutura, limpeza, materiais, equipamentos, rh, atendimento, seguranca). Calcule a "mediaFinal" como a média aritmética simples dessas 7 notas.
-2. **topico12_conclusao**: Conclusão formal dos dados da visita. Restrição: Máximo de 7 linhas.
-3. **avaliacaoEvolucao**: Análise de evolução da unidade. Restrição: Máximo de 5 linhas.
+REGRAS DE RESPOSTA (Retorne APENAS o JSON puro):
+1. topico11_notas: Atribua uma nota de 1 a 5 (números inteiros ou decimais) para cada um dos 7 tópicos (estrutura, limpeza, materiais, equipamentos, rh, atendimento, seguranca). Calcule a "mediaFinal" como a média aritmética simples dessas 7 notas.
+2. topico12_conclusao: Conclusão formal dos dados da visita (máximo de 7 linhas).
+3. avaliacaoEvolucao: Análise de evolução da unidade (máximo de 5 linhas).
 
-Formato exato do JSON esperado:
+Formato JSON esperado:
 {
   "topico11_notas": {
     "estrutura": 4,
@@ -63,45 +71,53 @@ Formato exato do JSON esperado:
 `;
 
     const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-120b",
       messages: [
-        { role: "system", content: "Você é um assistente especialista em retornar estritamente JSON válido." },
-        { role: "user", content: prompt }
+        { 
+          role: "system", 
+          content: "Você é um assistente especialista em auditoria e responde estritamente em JSON válido." 
+        },
+        { 
+          role: "user", 
+          content: prompt 
+        }
       ],
+      // Força a Groq a retornar apenas JSON
+      response_format: { type: "json_object" },
       temperature: 0.3,
     });
 
     const responseText = completion.choices[0]?.message?.content || '';
-    
-    // Tratamento robusto para extrair apenas o JSON caso o modelo retorne marcações extras
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-    const cleanedJson = jsonMatch ? jsonMatch[0] : responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-    const parsed = JSON.parse(cleanedJson);
+    const parsed = JSON.parse(responseText);
 
     const notas = parsed?.topico11_notas || {};
-    const soma = (notas.estrutura || 3) + (notas.limpeza || 3) + (notas.materiais || 3) + 
-                 (notas.equipamentos || 3) + (notas.rh || 3) + (notas.atendimento || 3) + 
-                 (notas.seguranca || 3);
+    const soma = (Number(notas.estrutura) || 3) + 
+                 (Number(notas.limpeza) || 3) + 
+                 (Number(notas.materiais) || 3) + 
+                 (Number(notas.equipamentos) || 3) + 
+                 (Number(notas.rh) || 3) + 
+                 (Number(notas.atendimento) || 3) + 
+                 (Number(notas.seguranca) || 3);
     
     const mediaCalculada = Number((soma / 7).toFixed(1));
 
     return {
       topico11_notas: {
-        estrutura: notas.estrutura ?? 3,
-        limpeza: notas.limpeza ?? 3,
-        materiais: notas.materiais ?? 3,
-        equipamentos: notas.equipamentos ?? 3,
-        rh: notas.rh ?? 3,
-        atendimento: notas.atendimento ?? 3,
-        seguranca: notas.seguranca ?? 3,
-        mediaFinal: notas.mediaFinal ?? mediaCalculada,
+        estrutura: Number(notas.estrutura) || 3,
+        limpeza: Number(notas.limpeza) || 3,
+        materiais: Number(notas.materiais) || 3,
+        equipamentos: Number(notas.equipamentos) || 3,
+        rh: Number(notas.rh) || 3,
+        atendimento: Number(notas.atendimento) || 3,
+        seguranca: Number(notas.seguranca) || 3,
+        mediaFinal: Number(notas.mediaFinal) || mediaCalculada,
       },
       topico12_conclusao: parsed.topico12_conclusao || "Conclusão registrada com base nos dados coletados em campo.",
       avaliacaoEvolucao: parsed.avaliacaoEvolucao || "Avaliação de evolução realizada sem observações críticas adicionais.",
     };
-  } catch (error: unknown) {
-    console.error("ERRO DETALHADO DA GROQ:", error instanceof Error ? error.message : error);
-    console.warn("Falha ao processar com IA, aplicando respostas do fallback de segurança.");
+  } catch (error: any) {
+    console.error("❌ ERRO REAL DA GROQ:", error?.response?.data || error?.message || error);
+    console.warn("⚠️ Aplicando respostas do fallback de segurança.");
     return getFallbackAIResult(data);
   }
 }
